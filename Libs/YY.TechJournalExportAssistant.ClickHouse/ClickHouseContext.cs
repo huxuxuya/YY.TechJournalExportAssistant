@@ -226,86 +226,32 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         }
         public void SaveLogPosition(TechJournalLogBase techJournalLog, FileInfo logFileInfo, TechJournalPosition position)
         {
-            var commandAddLogInfo = _connection.CreateCommand();
-            commandAddLogInfo.CommandText =
-                @"INSERT INTO LogFiles (
-                    TechJournalLog,
-                    DirectoryName,
-                    Id,
-                    FileName,
-                    CreateDate,
-                    ModificationDate,
-                    LastEventNumber,
-                    LastCurrentFileData,
-                    LastStreamPosition
-                ) VALUES (
-                    {isId:String},
-                    {directoryName:String},
-                    {newId:Int64},
-                    {FileName:String},
-                    {CreateDate:DateTime},
-                    {ModificationDate:DateTime},
-                    {LastEventNumber:Int64},
-                    {LastCurrentFileData:String},
-                    {LastStreamPosition:Int64}     
-                )";
+            using (ClickHouseBulkCopy bulkCopyInterface = new ClickHouseBulkCopy(_connection)
+            {
+                DestinationTableName = "LogFiles",
+                BatchSize = 100000
+            })
+            {
+                long logFileNewId = GetLogFileInfoNewId(techJournalLog);
+                IEnumerable<object[]> values = new List<object[]>()
+                {
+                    new object[]
+                    {
+                        techJournalLog.DirectoryName,
+                        techJournalLog.Name,
+                        logFileNewId,
+                        logFileInfo.Name,
+                        logFileInfo.CreationTimeUtc,
+                        logFileInfo.LastWriteTimeUtc,
+                        position.EventNumber,
+                        position.CurrentFileData.Replace("\\", "\\\\"),
+                        position.StreamPosition ?? 0
+                    }
+                }.AsEnumerable();
 
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "directoryName",
-                DbType = DbType.Int64,
-                Value = techJournalLog.DirectoryName
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "isId",
-                DbType = DbType.Int64,
-                Value = techJournalLog.Name
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "newId",
-                DbType = DbType.Int64,
-                Value = GetLogFileInfoNewId(techJournalLog)
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "FileName",
-                DbType = DbType.AnsiString,
-                Value = logFileInfo.Name
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "CreateDate",
-                DbType = DbType.DateTime,
-                Value = logFileInfo.CreationTimeUtc
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "ModificationDate",
-                DbType = DbType.DateTime,
-                Value = logFileInfo.LastWriteTimeUtc
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "LastEventNumber",
-                DbType = DbType.Int64,
-                Value = position.EventNumber
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "LastCurrentFileData",
-                DbType = DbType.AnsiString,
-                Value = position.CurrentFileData.Replace("\\", "\\\\")
-            });
-            commandAddLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "LastStreamPosition",
-                DbType = DbType.Int64,
-                Value = position.StreamPosition ?? 0
-            });
-
-            commandAddLogInfo.ExecuteNonQuery();
+                var bulkResult = bulkCopyInterface.WriteToServerAsync(values);
+                bulkResult.Wait();
+            }
         }
         public long GetLogFileInfoNewId(TechJournalLogBase techJournalLog)
         {
