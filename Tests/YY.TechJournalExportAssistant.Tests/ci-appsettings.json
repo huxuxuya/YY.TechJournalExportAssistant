@@ -1,0 +1,16 @@
+﻿{
+  "ConnectionStrings": {
+    "TechJournalDatabase": "Host=localhost;Port=8123;Database=TechJournalExportTest;Username=default;password=defaultpassword;"
+  },
+  "TechJournalLog": {
+    "Name": "TechJournalTest",
+    "Description": "Технологический журнал. Загрузка тестовых данных"
+  },
+  "TechJournal": {
+    "SourcePath": "TestData\\LGFFormat",
+    "UseWatchMode": false,
+    "WatchPeriod": 60,
+    "Portion": 10000,
+    "TimeZone": ""
+  }
+}

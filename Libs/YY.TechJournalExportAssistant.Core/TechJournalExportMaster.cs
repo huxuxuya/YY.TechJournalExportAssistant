@@ -11,7 +11,7 @@ namespace YY.TechJournalExportAssistant.Core
     {
         #region Private Member Variables
 
-        private string _eventLogPath;
+        private string _techJournalLogPath;
         private ITechJournalOnTarget _target;
         private TechJournalReader _reader;
         private readonly List<EventData> _dataToSend;
@@ -42,17 +42,17 @@ namespace YY.TechJournalExportAssistant.Core
 
         public void SetEventLogPath(string eventLogPath, TimeZoneInfo timeZone)
         {
-            _eventLogPath = eventLogPath;
-            if (!string.IsNullOrEmpty(_eventLogPath))
+            _techJournalLogPath = eventLogPath;
+            if (!string.IsNullOrEmpty(_techJournalLogPath))
             {
-                _reader = TechJournalReader.CreateReader(_eventLogPath);
+                _reader = TechJournalReader.CreateReader(_techJournalLogPath);
                 _reader.SetTimeZone(timeZone);
             }
         }
-        public void SetTechJournalPath(string eventLogPath, TimeZoneInfo timeZone)
+        public void SetTechJournalPath(string techJournalLogPath, TimeZoneInfo timeZone)
         {
             _logTimeZoneInfo = timeZone;
-            SetEventLogPath(eventLogPath, _logTimeZoneInfo);
+            SetEventLogPath(techJournalLogPath, _logTimeZoneInfo);
         }
         public void SetTarget(ITechJournalOnTarget target)
         {
@@ -68,7 +68,7 @@ namespace YY.TechJournalExportAssistant.Core
                 return false;
             if (_target == null)
                 return false;
-            if (_eventLogPath == null)
+            if (_techJournalLogPath == null)
                 return false;
 
             TechJournalPosition lastPosition = _target.GetLastPosition();
@@ -98,7 +98,7 @@ namespace YY.TechJournalExportAssistant.Core
         }
         public void SendData()
         {
-            if (_reader == null || _target == null || _eventLogPath == null)
+            if (_reader == null || _target == null || _techJournalLogPath == null)
                 return;
 
             TechJournalPosition lastPosition = _target.GetLastPosition();
@@ -139,17 +139,19 @@ namespace YY.TechJournalExportAssistant.Core
 
         private void SendDataCurrentPortion(TechJournalReader reader)
         {
+            FileInfo currentFile = new FileInfo(reader.CurrentFile);
+
             RiseBeforeExportData(out var cancel);
             if (!cancel)
             {
-                _target.Save(_dataToSend);
+                _target.Save(_dataToSend, currentFile.Name);
                 RiseAfterExportData(reader.GetCurrentPosition());
             }
 
             if (reader.CurrentFile != null)
             {
                 _target.SaveLogPosition(
-                    new FileInfo(reader.CurrentFile),
+                    currentFile,
                     reader.GetCurrentPosition());
             }
             _dataToSend.Clear();

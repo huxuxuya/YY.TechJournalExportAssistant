@@ -20,12 +20,12 @@ namespace YY.TechJournalExportAssistant.Core
             throw new NotImplementedException();
         }
 
-        public virtual void Save(EventData eventData)
+        public virtual void Save(EventData eventData, string fileName)
         {
             throw new NotImplementedException();
         }
 
-        public virtual void Save(IList<EventData> rowsData)
+        public virtual void Save(IList<EventData> rowsData, string fileName)
         {
             throw new NotImplementedException();
         }

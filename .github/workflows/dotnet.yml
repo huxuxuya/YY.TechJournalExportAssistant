@@ -17,11 +17,13 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
+    - name: Install ClickHouse
+      run: sudo chmod +x ./Scripts/install-clickhouse.sh && ./Scripts/install-clickhouse.sh
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet test Tests/YY.TechJournalExportAssistant.Tests/YY.TechJournalExportAssistant.Tests.csproj
     - name: Deploy
       run: chmod +x ./Scripts/deploy.sh && ./Scripts/deploy.sh ${{secrets.NUGET_API_KEY}}

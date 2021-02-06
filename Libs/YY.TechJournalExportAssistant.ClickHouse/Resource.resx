@@ -122,6 +122,7 @@
 (
     TechJournalLog LowCardinality(String),
     DirectoryName LowCardinality(String),
+    FileName LowCardinality(String),
     Id Int64 Codec(DoubleDelta, LZ4),
     Period DateTime Codec(Delta, LZ4),
     Level Int64 Codec(DoubleDelta, LZ4),

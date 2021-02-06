@@ -65,6 +65,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         ///(
         ///    TechJournalLog LowCardinality(String),
         ///    DirectoryName LowCardinality(String),
+        ///    FileName LowCardinality(String),
         ///    Id Int64 Codec(DoubleDelta, LZ4),
         ///    Period DateTime Codec(Delta, LZ4),
         ///    Level Int64 Codec(DoubleDelta, LZ4),
@@ -73,7 +74,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         ///    EventName LowCardinality(String),
         ///    ServerContextName LowCardinality(String),
         ///    ProcessName LowCardinality(String),
-        ///    SessionId Int64 Codec(DoubleDelta, LZ4) [остаток строки не уместился]&quot;;.
+        ///    S [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string Query_CreateTable_EventData {
             get {

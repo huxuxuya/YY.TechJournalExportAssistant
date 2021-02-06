@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using YY.TechJournalExportAssistant.Core;
 using YY.TechJournalReaderAssistant;
@@ -84,21 +85,29 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         {
             return _portion;
         }
-        public override void Save(EventData rowData)
+        public override void Save(EventData rowData, string fileName)
         {
             IList<EventData> rowsData = new List<EventData>
             {
                 rowData
             };
-            Save(rowsData);
+            Save(rowsData, fileName);
         }
 
-        public override void Save(IList<EventData> rowsData)
+        public override void Save(IList<EventData> rowsData, string fileName)
         {
+            if(rowsData.Count == 0)
+                return;
+
             using (var context = new ClickHouseContext(_connectionString))
             {
                 if (_maxPeriodRowData == DateTime.MinValue)
-                    _maxPeriodRowData = context.GetRowsDataMaxPeriod(_techJournalLog);
+                {
+                    _maxPeriodRowData = context.GetRowsDataMaxPeriod(
+                        _techJournalLog,
+                        fileName
+                    );
+                }
 
                 List<EventData> newEntities = new List<EventData>();
                 foreach (var itemRow in rowsData)
@@ -106,12 +115,12 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     if (itemRow == null)
                         continue;
                     if (_maxPeriodRowData != DateTime.MinValue && itemRow.Period <= _maxPeriodRowData)
-                        if (context.RowDataExistOnDatabase(_techJournalLog, itemRow))
+                        if (context.RowDataExistOnDatabase(_techJournalLog, itemRow, fileName))
                             continue;
 
                     newEntities.Add(itemRow);
                 }
-                context.SaveRowsData(_techJournalLog, newEntities);
+                context.SaveRowsData(_techJournalLog, newEntities, fileName);
             }
         }
         public override void SetInformationSystem(TechJournalLogBase techJournalLog)

@@ -52,7 +52,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         #region RowsData
 
-        public void SaveRowsData(TechJournalLogBase techJournalLog, List<EventData> eventData)
+        public void SaveRowsData(TechJournalLogBase techJournalLog, List<EventData> eventData, string fileName)
         {
             using (ClickHouseBulkCopy bulkCopyInterface = new ClickHouseBulkCopy(_connection)
             {
@@ -64,6 +64,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                 {
                     techJournalLog.Name,
                     techJournalLog.DirectoryName,
+                    fileName,
                     i.Id,
                     i.Period,
                     i.Level,
@@ -102,7 +103,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                 bulkResult.Wait();
             }
         }
-        public DateTime GetRowsDataMaxPeriod(TechJournalLogBase techJournalLog)
+        public DateTime GetRowsDataMaxPeriod(TechJournalLogBase techJournalLog, string fileName)
         {
             DateTime output = DateTime.MinValue;
 
@@ -112,11 +113,23 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     @"SELECT
                         MAX(Period) AS MaxPeriod
                     FROM EventData AS RD
-                    WHERE TechJournalLog = {techJournalLog:String} ";
+                    WHERE TechJournalLog = {techJournalLog:String}
+                        AND DirectoryName = {directoryName:String}
+                        AND FileName = {fileName:String}";
                 command.Parameters.Add(new ClickHouseDbParameter
                 {
                     ParameterName = "techJournalLog",
                     Value = techJournalLog.Name
+                });
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "directoryName",
+                    Value = techJournalLog.DirectoryName
+                });
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "fileName",
+                    Value = fileName
                 });
                 using (var cmdReader = command.ExecuteReader())
                 {
@@ -127,7 +140,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
             return output;
         }
-        public bool RowDataExistOnDatabase(TechJournalLogBase techJournalLog, EventData eventData)
+        public bool RowDataExistOnDatabase(TechJournalLogBase techJournalLog, EventData eventData, string fileName)
         {
             bool output = false;
 
@@ -141,6 +154,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     FROM EventData AS RD
                     WHERE TechJournalLog = {techJournalLog:String}
                         AND Id = {existId:Int64}
+                        AND FileName = {fileName:String}
                         AND Period = {existPeriod:DateTime}";
                 command.Parameters.Add(new ClickHouseDbParameter
                 {
@@ -159,6 +173,12 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     ParameterName = "existPeriod",
                     DbType = DbType.DateTime,
                     Value = eventData.Period
+                });
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "fileName",
+                    DbType = DbType.String,
+                    Value = fileName
                 });
 
                 using (var cmdReader = command.ExecuteReader())
@@ -237,8 +257,8 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                 {
                     new object[]
                     {
-                        techJournalLog.DirectoryName,
                         techJournalLog.Name,
+                        techJournalLog.DirectoryName,
                         logFileNewId,
                         logFileInfo.Name,
                         logFileInfo.CreationTimeUtc,

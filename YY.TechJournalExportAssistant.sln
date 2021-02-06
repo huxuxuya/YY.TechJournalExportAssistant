@@ -35,6 +35,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{7E5B
 		Scripts\appveyor-build.ps1 = Scripts\appveyor-build.ps1
 		Scripts\appveyor-runTests.ps1 = Scripts\appveyor-runTests.ps1
 		Scripts\deploy.sh = Scripts\deploy.sh
+		Scripts\install-clickhouse.sh = Scripts\install-clickhouse.sh
 	EndProjectSection
 EndProject
 Global

@@ -11,7 +11,7 @@ namespace YY.TechJournalExportAssistant.Core
         void SaveLogPosition(FileInfo logFileInfo, TechJournalPosition position);
         int GetPortionSize();
         void SetInformationSystem(TechJournalLogBase techJournalLog);
-        void Save(EventData eventData);
-        void Save(IList<EventData> eventData);
+        void Save(EventData eventData, string fileName);
+        void Save(IList<EventData> eventData, string fileName);
     }
 }
