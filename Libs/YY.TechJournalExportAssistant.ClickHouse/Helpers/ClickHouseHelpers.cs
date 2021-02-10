@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using ClickHouse.Client.ADO;
+using ClickHouse.Client.ADO.Parameters;
 
 namespace YY.TechJournalExportAssistant.ClickHouse.Helpers
 {
@@ -15,44 +17,65 @@ namespace YY.TechJournalExportAssistant.ClickHouse.Helpers
 
             return connectionParams.ToDictionary(o => o.Name, o => o.Value);
         }
+
+        public static void AddParameterToCommand(this ClickHouseCommand command, string name, object value)
+        {
+            command.Parameters.Add(new ClickHouseDbParameter
+            {
+                ParameterName = name,
+                Value = value
+            });
+        }
+        public static void AddParameterToCommand(this ClickHouseCommand command, string name, DbType type, object value)
+        {
+            command.Parameters.Add(new ClickHouseDbParameter
+            {
+                ParameterName = name,
+                DbType = type,
+                Value = value
+            });
+        }
+
         public static void CreateDatabaseIfNotExist(string connectionSettings)
         {
-            var connectionParams = GetConnectionParams(connectionSettings);
-            var databaseParam = connectionParams.FirstOrDefault(e => e.Key.ToUpper() == "DATABASE");
-            string databaseName = databaseParam.Value;
-
-            if (databaseName != null)
-            {
-                string connectionStringDefault = connectionSettings.Replace(
-                    $"{databaseParam.Key}={databaseParam.Value}",
-                    $"Database=default"
-                );
-                using (var defaultConnection = new ClickHouseConnection(connectionStringDefault))
-                {
-                    defaultConnection.Open();
-                    var cmdDefault = defaultConnection.CreateCommand();
-                    cmdDefault.CommandText = $"CREATE DATABASE IF NOT EXISTS {databaseName}";
-                    cmdDefault.ExecuteNonQuery();
-                }
-            }
+            string databaseName = GetDatabaseName(connectionSettings, out _, out _);
+            ExecNonReaderQuery(connectionSettings, $"CREATE DATABASE IF NOT EXISTS {databaseName}");
         }
+
         public static void DropDatabaseIfExist(string connectionSettings)
+        {
+            string databaseName = GetDatabaseName(connectionSettings, out _, out _);
+            ExecNonReaderQuery(connectionSettings, $"DROP DATABASE IF EXISTS {databaseName}");
+        }
+        
+        private static string GetDatabaseName(string connectionSettings, out string paramName, out string paramValue)
         {
             var connectionParams = GetConnectionParams(connectionSettings);
             var databaseParam = connectionParams.FirstOrDefault(e => e.Key.ToUpper() == "DATABASE");
             string databaseName = databaseParam.Value;
+            paramName = databaseParam.Key;
+            paramValue = databaseParam.Value;
+
+            return databaseName;
+        }
+
+        private static void ExecNonReaderQuery(string connectionSettings, string commandTest)
+        {
+            string paramName;
+            string paramValue;
+            string databaseName = GetDatabaseName(connectionSettings, out paramName, out paramValue);
 
             if (databaseName != null)
             {
                 string connectionStringDefault = connectionSettings.Replace(
-                    $"{databaseParam.Key}={databaseParam.Value}",
+                    $"{paramName}={paramValue}",
                     $"Database=default"
                 );
                 using (var defaultConnection = new ClickHouseConnection(connectionStringDefault))
                 {
                     defaultConnection.Open();
                     var cmdDefault = defaultConnection.CreateCommand();
-                    cmdDefault.CommandText = $"DROP DATABASE IF EXISTS {databaseName}";
+                    cmdDefault.CommandText = commandTest;
                     cmdDefault.ExecuteNonQuery();
                 }
             }

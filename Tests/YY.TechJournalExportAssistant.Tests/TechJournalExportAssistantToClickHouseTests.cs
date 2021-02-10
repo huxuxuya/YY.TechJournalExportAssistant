@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -10,14 +9,13 @@ using YY.TechJournalExportAssistant.ClickHouse;
 using YY.TechJournalExportAssistant.ClickHouse.Helpers;
 using YY.TechJournalExportAssistant.Core;
 using YY.TechJournalReaderAssistant;
-using YY.TechJournalReaderAssistant.Models;
 
 namespace YY.TechJournalExportAssistant.Tests
 {
     public class TechJournalExportAssistantToClickHouseTests
     {
-        private string _configFilePath;
-        private string _logDataPath;
+        private readonly string _configFilePath;
+        private readonly string _logDataPath;
 
         public TechJournalExportAssistantToClickHouseTests()
         {

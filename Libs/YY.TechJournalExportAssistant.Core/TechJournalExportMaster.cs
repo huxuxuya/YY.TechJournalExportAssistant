@@ -71,26 +71,12 @@ namespace YY.TechJournalExportAssistant.Core
             if (_techJournalLogPath == null)
                 return false;
 
-            TechJournalPosition lastPosition = _target.GetLastPosition();
+            TechJournalPosition lastPosition = GetFixedCurrentPosition();
 
             _reader.AfterReadFile -= TechJournalReader_AfterReadFile;
             _reader.AfterReadEvent -= TechJournalReader_AfterReadEvent;
             _reader.OnErrorEvent -= TechJournalReader_OnErrorEvent;
             _reader.Reset();
-
-            // В случае, если каталог последней позиции не совпадает 
-            // с текущим каталогом данных, то предыдущую позицию не учитываем
-            if (lastPosition != null)
-            {
-                FileInfo lastDataFileInfo = new FileInfo(lastPosition.CurrentFileData);
-                FileInfo currentDataFileInfo = new FileInfo(_reader.CurrentFile);
-
-                if (lastDataFileInfo.Directory != null && currentDataFileInfo.Directory != null)
-                {
-                    if (lastDataFileInfo.Directory.FullName != currentDataFileInfo.Directory.FullName)
-                        lastPosition = null;
-                }
-            }
 
             _reader.SetCurrentPosition(lastPosition);
 
@@ -101,7 +87,8 @@ namespace YY.TechJournalExportAssistant.Core
             if (_reader == null || _target == null || _techJournalLogPath == null)
                 return;
 
-            TechJournalPosition lastPosition = _target.GetLastPosition();
+            TechJournalPosition lastPosition = GetFixedCurrentPosition();
+
             _reader.Reset();
             _reader.AfterReadFile += TechJournalReader_AfterReadFile;
             _reader.AfterReadEvent += TechJournalReader_AfterReadEvent;
@@ -137,6 +124,36 @@ namespace YY.TechJournalExportAssistant.Core
 
         #region Private Methods
 
+        private TechJournalPosition GetFixedCurrentPosition()
+        {
+            TechJournalPosition lastPosition = _target.GetLastPosition();
+
+            if (lastPosition != null)
+            {
+                FileInfo lastDataFileInfo = new FileInfo(lastPosition.CurrentFileData);
+
+                if (lastPosition.CurrentFileData != null && _reader.CurrentFile != null)
+                {
+                    FileInfo currentDataFileInfo = new FileInfo(_reader.CurrentFile);
+
+                    // В случае, если каталог последней позиции не совпадает 
+                    // с текущим каталогом данных, то предыдущую позицию не учитываем
+                    if (lastDataFileInfo.Directory != null && currentDataFileInfo.Directory != null)
+                    {
+                        if (lastDataFileInfo.Directory.FullName != currentDataFileInfo.Directory.FullName)
+                            lastPosition = null;
+                    }
+                }
+
+                // Если файла с данными уже нет, то предыдущую позицию не учитываем
+                if (!lastDataFileInfo.Exists)
+                {
+                    lastPosition = null;
+                }
+            }
+
+            return lastPosition;
+        }
         private void SendDataCurrentPortion(TechJournalReader reader)
         {
             FileInfo currentFile = new FileInfo(reader.CurrentFile);

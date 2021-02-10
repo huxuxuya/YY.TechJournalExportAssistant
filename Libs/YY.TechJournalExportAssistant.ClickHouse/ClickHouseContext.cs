@@ -4,7 +4,6 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using ClickHouse.Client.ADO;
-using ClickHouse.Client.ADO.Parameters;
 using ClickHouse.Client.Copy;
 using YY.TechJournalExportAssistant.ClickHouse.Helpers;
 using YY.TechJournalExportAssistant.Core;
@@ -17,10 +16,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 {
     public class ClickHouseContext : IDisposable
     {
-        #region Private Static Members
-
-        #endregion
-
         #region Private Members
 
         private ClickHouseConnection _connection;
@@ -32,16 +27,14 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         public ClickHouseContext(string connectionSettings)
         {
-            CheckDatabaseSettings(connectionSettings);
+            ClickHouseHelpers.CreateDatabaseIfNotExist(connectionSettings);
 
             _connection = new ClickHouseConnection(connectionSettings);
             _connection.Open();
             
             var cmdDDL = _connection.CreateCommand();
-
             cmdDDL.CommandText = Resource.Query_CreateTable_EventData;
             cmdDDL.ExecuteNonQuery();
-
             cmdDDL.CommandText = Resource.Query_CreateTable_LogFiles;
             cmdDDL.ExecuteNonQuery();
         }
@@ -116,26 +109,11 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     WHERE TechJournalLog = {techJournalLog:String}
                         AND DirectoryName = {directoryName:String}
                         AND FileName = {fileName:String}";
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "techJournalLog",
-                    Value = techJournalLog.Name
-                });
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "directoryName",
-                    Value = techJournalLog.DirectoryName
-                });
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "fileName",
-                    Value = fileName
-                });
+                command.AddParameterToCommand("techJournalLog", techJournalLog.Name);
+                command.AddParameterToCommand("directoryName", techJournalLog.DirectoryName);
+                command.AddParameterToCommand("fileName", fileName);
                 using (var cmdReader = command.ExecuteReader())
-                {
-                    if (cmdReader.Read())
-                        output = cmdReader.GetDateTime(0);
-                }
+                    if (cmdReader.Read()) output = cmdReader.GetDateTime(0);
             }
 
             return output;
@@ -156,36 +134,12 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                         AND Id = {existId:Int64}
                         AND FileName = {fileName:String}
                         AND Period = {existPeriod:DateTime}";
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "techJournalLog",
-                    DbType = DbType.AnsiString,
-                    Value = techJournalLog.Name
-                });
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "existId",
-                    DbType = DbType.Int64,
-                    Value = eventData.Id
-                });
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "existPeriod",
-                    DbType = DbType.DateTime,
-                    Value = eventData.Period
-                });
-                command.Parameters.Add(new ClickHouseDbParameter
-                {
-                    ParameterName = "fileName",
-                    DbType = DbType.String,
-                    Value = fileName
-                });
-
+                command.AddParameterToCommand("techJournalLog", DbType.AnsiString, techJournalLog.Name);
+                command.AddParameterToCommand("existId", DbType.Int64, eventData.Id);
+                command.AddParameterToCommand("existPeriod", DbType.DateTime, eventData.Period);
+                command.AddParameterToCommand("fileName", DbType.String, fileName);
                 using (var cmdReader = command.ExecuteReader())
-                {
-                    if (cmdReader.Read())
-                        output = true;
-                }
+                    if (cmdReader.Read()) output = true;
             }
 
             return output;
@@ -213,18 +167,8 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                         WHERE LF_LAST.TechJournalLog = {techJournalLog:String}
                             AND LF_LAST.DirectoryName = {directoryName:String}
                     )";
-            cmdGetLastLogFileInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "techJournalLog",
-                DbType = DbType.AnsiString,
-                Value = techJournalLog.Name
-            });
-            cmdGetLastLogFileInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "directoryName",
-                DbType = DbType.AnsiString,
-                Value = techJournalLog.DirectoryName
-            });
+            cmdGetLastLogFileInfo.AddParameterToCommand("techJournalLog", DbType.AnsiString, techJournalLog.Name);
+            cmdGetLastLogFileInfo.AddParameterToCommand("directoryName", DbType.AnsiString, techJournalLog.DirectoryName);
 
             TechJournalPosition output = null;
             using (var cmdReader = cmdGetLastLogFileInfo.ExecuteReader())
@@ -234,7 +178,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     string fileData = cmdReader.GetString(1)
                         .Replace("\\\\", "\\")
                         .FixNetworkPath();
-
                     output = new TechJournalPosition(
                         cmdReader.GetInt64(0),
                         fileData,
@@ -248,18 +191,16 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         {
             using (ClickHouseBulkCopy bulkCopyInterface = new ClickHouseBulkCopy(_connection)
             {
-                DestinationTableName = "LogFiles",
-                BatchSize = 100000
+                DestinationTableName = "LogFiles", BatchSize = 100000
             })
             {
-                long logFileNewId = GetLogFileInfoNewId(techJournalLog);
                 IEnumerable<object[]> values = new List<object[]>()
                 {
                     new object[]
                     {
                         techJournalLog.Name,
                         techJournalLog.DirectoryName,
-                        logFileNewId,
+                        GetLogFileInfoNewId(techJournalLog),
                         logFileInfo.Name,
                         logFileInfo.CreationTimeUtc,
                         logFileInfo.LastWriteTimeUtc,
@@ -268,7 +209,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                         position.StreamPosition ?? 0
                     }
                 }.AsEnumerable();
-
                 var bulkResult = bulkCopyInterface.WriteToServerAsync(values);
                 bulkResult.Wait();
             }
@@ -287,27 +227,13 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                         FROM LogFiles
                         WHERE TechJournalLog = {techJournalLog:String}
                             AND DirectoryName = {directoryName:String}";
-                    command.Parameters.Add(new ClickHouseDbParameter
-                    {
-                        ParameterName = "techJournalLog",
-                        Value = techJournalLog.Name
-                    });
-                    command.Parameters.Add(new ClickHouseDbParameter
-                    {
-                        ParameterName = "directoryName",
-                        Value = techJournalLog.DirectoryName
-                    });
+                    command.AddParameterToCommand("techJournalLog", DbType.AnsiString, techJournalLog.Name);
+                    command.AddParameterToCommand("directoryName", DbType.AnsiString, techJournalLog.DirectoryName);
                     using (var cmdReader = command.ExecuteReader())
-                    {
-                        if (cmdReader.Read())
-                            output = cmdReader.GetInt64(0);
-                    }
+                        if (cmdReader.Read()) output = cmdReader.GetInt64(0);
                 }
             }
-            else
-            {
-                output = logFileLastId;
-            }
+            else output = logFileLastId;
 
             output += 1;
             logFileLastId = output;
@@ -327,18 +253,8 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     WHERE TechJournalLog = {techJournalLog:String}
                         AND DirectoryName = {directoryName:String}
                 )";
-            commandRemoveArchiveLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "techJournalLog",
-                DbType = DbType.AnsiString,
-                Value = techJournalLog.Name
-            });
-            commandRemoveArchiveLogInfo.Parameters.Add(new ClickHouseDbParameter
-            {
-                ParameterName = "directoryName",
-                DbType = DbType.AnsiString,
-                Value = techJournalLog.DirectoryName
-            });
+            commandRemoveArchiveLogInfo.AddParameterToCommand("techJournalLog", DbType.AnsiString, techJournalLog.Name);
+            commandRemoveArchiveLogInfo.AddParameterToCommand("directoryName", DbType.AnsiString, techJournalLog.DirectoryName);
             commandRemoveArchiveLogInfo.ExecuteNonQuery();
         }
 
@@ -350,19 +266,9 @@ namespace YY.TechJournalExportAssistant.ClickHouse
             {
                 if (_connection.State == ConnectionState.Open)
                     _connection.Close();
-
                 _connection.Dispose();
                 _connection = null;
             }
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private void CheckDatabaseSettings(string connectionSettings)
-        {
-            ClickHouseHelpers.CreateDatabaseIfNotExist(connectionSettings);
         }
 
         #endregion
