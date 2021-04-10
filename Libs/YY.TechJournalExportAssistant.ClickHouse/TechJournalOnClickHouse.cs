@@ -18,7 +18,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         private TechJournalLogBase _techJournalLog;
         private readonly string _connectionString;
         private TechJournalPosition _lastTechJournalFilePosition;
-        private int _stepsToClearLogFiles = 1000;
+        private int _stepsToClearLogFiles = 10000;
         private int _currentStepToClearLogFiles;
 
         #endregion

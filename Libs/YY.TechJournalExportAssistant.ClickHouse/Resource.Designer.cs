@@ -61,7 +61,16 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS EventData
+        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS EventData AS EventDataStorage ENGINE = Buffer(currentDatabase(), EventDataStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000).
+        /// </summary>
+        internal static string Query_CreateTable_EventData {
+            get {
+                return ResourceManager.GetString("Query_CreateTable_EventData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS EventDataStorage
         ///(
         ///    TechJournalLog LowCardinality(String),
         ///    DirectoryName LowCardinality(String),
@@ -73,17 +82,25 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         ///    DurationSec Int64 Codec(DoubleDelta, LZ4),
         ///    EventName LowCardinality(String),
         ///    ServerContextName LowCardinality(String),
-        ///    ProcessName LowCardinality(String),
-        ///    S [остаток строки не уместился]&quot;;.
+        ///    ProcessName LowCardinality(String), [остаток строки не уместился]&quot;;.
         /// </summary>
-        internal static string Query_CreateTable_EventData {
+        internal static string Query_CreateTable_EventDataStorage {
             get {
-                return ResourceManager.GetString("Query_CreateTable_EventData", resourceCulture);
+                return ResourceManager.GetString("Query_CreateTable_EventDataStorage", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS LogFiles
+        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS LogFiles AS LogFilesStorage ENGINE = Buffer(currentDatabase(), LogFilesStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000).
+        /// </summary>
+        internal static string Query_CreateTable_LogFiles {
+            get {
+                return ResourceManager.GetString("Query_CreateTable_LogFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS LogFilesStorage
         ///(
         ///	TechJournalLog LowCardinality(String),
         ///	DirectoryName LowCardinality(String),
@@ -97,12 +114,11 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         ///)
         ///engine = MergeTree()
         ///PARTITION BY toYYYYMM(CreateDate)
-        ///PRIMARY KEY CreateDate
-        ///OR [остаток строки не уместился]&quot;;.
+        ///PRIMARY KEY CreateD [остаток строки не уместился]&quot;;.
         /// </summary>
-        internal static string Query_CreateTable_LogFiles {
+        internal static string Query_CreateTable_LogFilesStorage {
             get {
-                return ResourceManager.GetString("Query_CreateTable_LogFiles", resourceCulture);
+                return ResourceManager.GetString("Query_CreateTable_LogFilesStorage", resourceCulture);
             }
         }
     }

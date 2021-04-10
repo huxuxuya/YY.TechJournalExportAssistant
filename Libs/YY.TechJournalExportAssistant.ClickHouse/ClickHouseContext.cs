@@ -33,6 +33,10 @@ namespace YY.TechJournalExportAssistant.ClickHouse
             _connection.Open();
             
             var cmdDDL = _connection.CreateCommand();
+            cmdDDL.CommandText = Resource.Query_CreateTable_EventDataStorage;
+            cmdDDL.ExecuteNonQuery();
+            cmdDDL.CommandText = Resource.Query_CreateTable_LogFilesStorage;
+            cmdDDL.ExecuteNonQuery();
             cmdDDL.CommandText = Resource.Query_CreateTable_EventData;
             cmdDDL.ExecuteNonQuery();
             cmdDDL.CommandText = Resource.Query_CreateTable_LogFiles;
@@ -244,12 +248,12 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         {
             var commandRemoveArchiveLogInfo = _connection.CreateCommand();
             commandRemoveArchiveLogInfo.CommandText =
-                @"ALTER TABLE LogFiles DELETE
+                @"ALTER TABLE LogFilesStorage DELETE
                 WHERE TechJournalLog = {techJournalLog:String}
                     AND DirectoryName = {directoryName:String}
                     AND Id < (
                     SELECT MAX(Id) AS LastId
-                    FROM LogFiles lf
+                    FROM LogFilesStorage lf
                     WHERE TechJournalLog = {techJournalLog:String}
                         AND DirectoryName = {directoryName:String}
                 )";
