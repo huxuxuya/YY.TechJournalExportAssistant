@@ -118,7 +118,11 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Query_CreateTable_EventData" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS EventData
+    <value>CREATE TABLE IF NOT EXISTS EventData AS EventDataStorage ENGINE = Buffer(currentDatabase(), EventDataStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000)</value>
+    <comment>Создание буфера для новых данных технологического журнала</comment>
+  </data>
+  <data name="Query_CreateTable_EventDataStorage" xml:space="preserve">
+    <value>CREATE TABLE IF NOT EXISTS EventDataStorage
 (
     TechJournalLog LowCardinality(String),
     DirectoryName LowCardinality(String),
@@ -164,7 +168,10 @@ SETTINGS index_granularity = 8192;</value>
     <comment>Создание таблицы для хранения данных технологического журнала</comment>
   </data>
   <data name="Query_CreateTable_LogFiles" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS LogFiles
+    <value>CREATE TABLE IF NOT EXISTS LogFiles AS LogFilesStorage ENGINE = Buffer(currentDatabase(), LogFilesStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000)</value>
+  </data>
+  <data name="Query_CreateTable_LogFilesStorage" xml:space="preserve">
+    <value>CREATE TABLE IF NOT EXISTS LogFilesStorage
 (
 	TechJournalLog LowCardinality(String),
 	DirectoryName LowCardinality(String),
