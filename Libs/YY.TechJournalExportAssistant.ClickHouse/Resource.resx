@@ -117,12 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Query_CreateTable_EventData" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS EventData AS EventDataStorage ENGINE = Buffer(currentDatabase(), EventDataStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000)</value>
-    <comment>Создание буфера для новых данных технологического журнала</comment>
-  </data>
   <data name="Query_CreateTable_EventDataStorage" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS EventDataStorage
+    <value>CREATE TABLE IF NOT EXISTS EventData
 (
     TechJournalLog LowCardinality(String),
     DirectoryName LowCardinality(String),
@@ -167,15 +163,12 @@ ORDER BY Period
 SETTINGS index_granularity = 8192;</value>
     <comment>Создание таблицы для хранения данных технологического журнала</comment>
   </data>
-  <data name="Query_CreateTable_LogFiles" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS LogFiles AS LogFilesStorage ENGINE = Buffer(currentDatabase(), LogFilesStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000)</value>
-  </data>
   <data name="Query_CreateTable_LogFilesStorage" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS LogFilesStorage
+    <value>CREATE TABLE IF NOT EXISTS LogFiles
 (
 	TechJournalLog LowCardinality(String),
 	DirectoryName LowCardinality(String),
-	Id Int64 Codec(DoubleDelta, LZ4),
+	Id Int64 DEFAULT (toUnixTimestamp64Milli(now64())*1000000 + rowNumberInAllBlocks()) Codec(DoubleDelta, LZ4),
 	FileName LowCardinality(String),
 	CreateDate DateTime Codec(Delta, LZ4),
 	ModificationDate DateTime Codec(Delta, LZ4),
@@ -189,5 +182,37 @@ PRIMARY KEY CreateDate
 ORDER BY CreateDate
 SETTINGS index_granularity = 8192;</value>
     <comment>Создание таблицы для хранения данных лога обработки файлов</comment>
+  </data>
+  <data name="Query_GetActualPositions" xml:space="preserve">
+    <value>SELECT 
+    l.TechJournalLog, 
+    l.DirectoryName, 
+    l.Id, 
+    l.FileName, 
+    l.CreateDate, 
+    l.ModificationDate, 
+    l.LastEventNumber, 
+    l.LastCurrentFileData, 
+    l.LastStreamPosition
+FROM LogFiles l
+
+INNER JOIN
+
+(
+SELECT
+	TechJournalLog,
+	DirectoryName,
+    MAX(Id) LastId
+FROM LogFiles AS LF_LAST
+WHERE LF_LAST.TechJournalLog = {techJournalLog:String}
+GROUP BY TechJournalLog,
+	DirectoryName
+) lglast
+
+ON l.TechJournalLog = lglast.TechJournalLog 
+	AND l.DirectoryName = lglast.DirectoryName 
+	AND l.Id = lglast.LastId
+ORDER BY l.DirectoryName</value>
+    <comment>Получение последних событий</comment>
   </data>
 </root>

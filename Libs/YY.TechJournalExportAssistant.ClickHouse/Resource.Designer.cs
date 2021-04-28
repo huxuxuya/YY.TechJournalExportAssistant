@@ -61,16 +61,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS EventData AS EventDataStorage ENGINE = Buffer(currentDatabase(), EventDataStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000).
-        /// </summary>
-        internal static string Query_CreateTable_EventData {
-            get {
-                return ResourceManager.GetString("Query_CreateTable_EventData", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS EventDataStorage
+        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS EventData
         ///(
         ///    TechJournalLog LowCardinality(String),
         ///    DirectoryName LowCardinality(String),
@@ -82,7 +73,8 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         ///    DurationSec Int64 Codec(DoubleDelta, LZ4),
         ///    EventName LowCardinality(String),
         ///    ServerContextName LowCardinality(String),
-        ///    ProcessName LowCardinality(String), [остаток строки не уместился]&quot;;.
+        ///    ProcessName LowCardinality(String),
+        ///    S [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string Query_CreateTable_EventDataStorage {
             get {
@@ -91,20 +83,11 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS LogFiles AS LogFilesStorage ENGINE = Buffer(currentDatabase(), LogFilesStorage, 16, 10, 60, 100000, 1000000, 10000000, 100000000).
-        /// </summary>
-        internal static string Query_CreateTable_LogFiles {
-            get {
-                return ResourceManager.GetString("Query_CreateTable_LogFiles", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS LogFilesStorage
+        ///   Ищет локализованную строку, похожую на CREATE TABLE IF NOT EXISTS LogFiles
         ///(
         ///	TechJournalLog LowCardinality(String),
         ///	DirectoryName LowCardinality(String),
-        ///	Id Int64 Codec(DoubleDelta, LZ4),
+        ///	Id Int64 DEFAULT (toUnixTimestamp64Milli(now64())*1000000 + rowNumberInAllBlocks()) Codec(DoubleDelta, LZ4),
         ///	FileName LowCardinality(String),
         ///	CreateDate DateTime Codec(Delta, LZ4),
         ///	ModificationDate DateTime Codec(Delta, LZ4),
@@ -112,13 +95,46 @@ namespace YY.TechJournalExportAssistant.ClickHouse {
         ///	LastCurrentFileData LowCardinality(String),
         ///	LastStreamPosition Int64 Codec(DoubleDelta, LZ4)
         ///)
-        ///engine = MergeTree()
-        ///PARTITION BY toYYYYMM(CreateDate)
-        ///PRIMARY KEY CreateD [остаток строки не уместился]&quot;;.
+        ///engine = [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string Query_CreateTable_LogFilesStorage {
             get {
                 return ResourceManager.GetString("Query_CreateTable_LogFilesStorage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на SELECT 
+        ///    l.TechJournalLog, 
+        ///    l.DirectoryName, 
+        ///    l.Id, 
+        ///    l.FileName, 
+        ///    l.CreateDate, 
+        ///    l.ModificationDate, 
+        ///    l.LastEventNumber, 
+        ///    l.LastCurrentFileData, 
+        ///    l.LastStreamPosition
+        ///FROM LogFiles l
+        ///
+        ///INNER JOIN
+        ///
+        ///(
+        ///SELECT
+        ///	TechJournalLog,
+        ///	DirectoryName,
+        ///    MAX(Id) LastId
+        ///FROM LogFiles AS LF_LAST
+        ///WHERE LF_LAST.TechJournalLog = {techJournalLog:String}
+        ///GROUP BY TechJournalLog,
+        ///	DirectoryName
+        ///) lglast
+        ///
+        ///ON l.TechJournalLog = lglast.TechJournalLog 
+        ///	AND l.DirectoryNam [остаток строки не уместился]&quot;;.
+        /// </summary>
+        internal static string Query_GetActualPositions {
+            get {
+                return ResourceManager.GetString("Query_GetActualPositions", resourceCulture);
             }
         }
     }

@@ -73,7 +73,6 @@ namespace YY.TechJournalExportAssistantConsoleApp
                         target.SetInformationSystem(new TechJournalLogBase()
                         {
                             Name = techJournalName,
-                            DirectoryName = tjDirectory.DirectoryData.Name,
                             Description = techJournalDescription
                         });
                         exporter.SetTarget(target);
