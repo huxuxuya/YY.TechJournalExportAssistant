@@ -15,6 +15,11 @@ namespace YY.TechJournalExportAssistant.Core
             throw new NotImplementedException();
         }
 
+        public virtual void SaveLogPositions(List<TechJournalPosition> positions)
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual int GetPortionSize()
         {
             throw new NotImplementedException();

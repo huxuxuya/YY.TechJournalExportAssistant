@@ -163,7 +163,7 @@ namespace YY.TechJournalExportAssistant.Core
             RiseBeforeExportData(out var cancel);
             if (!cancel)
             {
-                _target.Save(_dataToSend, currentFile.Name);
+                _target.Save(_dataToSend, currentFile.FullName);
                 RiseAfterExportData(reader.GetCurrentPosition());
             }
 

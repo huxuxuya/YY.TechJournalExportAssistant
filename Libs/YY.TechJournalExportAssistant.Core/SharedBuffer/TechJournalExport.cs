@@ -210,11 +210,8 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
                                 eventsByFile.Clear();
                                 logBufferItem.Value.LogRows.Clear();
 
-                                foreach (var logPosition in logBufferItem.Value.LogPositions)
-                                {
-                                    target.SaveLogPosition(logPosition.Value);
-                                }
-
+                                target.SaveLogPositions(logBufferItem.Value.LogPositions.Select(l => l.Value).ToList());
+                                
                                 logBufferItem.Value.Created = DateTime.MinValue;
                                 logBufferItem.Value.LastUpdate = DateTime.MinValue;
                             }

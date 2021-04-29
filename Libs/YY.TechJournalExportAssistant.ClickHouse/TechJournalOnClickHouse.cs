@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using YY.TechJournalExportAssistant.Core;
 using YY.TechJournalExportAssistant.Core.SharedBuffer;
@@ -15,7 +14,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         private const int _defaultPortion = 1000;
         private readonly int _portion;
-        private DateTime _maxPeriodRowData;
         private TechJournalLogBase _techJournalLog;
         private readonly string _connectionString;
         private TechJournalPosition _lastTechJournalFilePosition;
@@ -35,7 +33,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         public TechJournalOnClickHouse(string connectionString, int portion)
         {
             _portion = portion;
-            _maxPeriodRowData = DateTime.MinValue;
 
             if (connectionString == null)
             {
@@ -73,6 +70,15 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
             _lastTechJournalFilePosition = position;
         }
+
+        public override void SaveLogPositions(List<TechJournalPosition> positions)
+        {
+            using (var context = new ClickHouseContext(_connectionString))
+            {
+                context.SaveLogPositions(_techJournalLog, positions);
+            }
+        }
+
         public override int GetPortionSize()
         {
             return _portion;
@@ -91,34 +97,9 @@ namespace YY.TechJournalExportAssistant.ClickHouse
             if(rowsData.Count == 0)
                 return;
 
-            FileInfo fileInfo = new FileInfo(fileName);
             using (var context = new ClickHouseContext(_connectionString))
             {
-                if (_maxPeriodRowData == DateTime.MinValue)
-                {
-                    if (fileInfo.Directory != null)
-                        _maxPeriodRowData = context.GetRowsDataMaxPeriod(
-                            _techJournalLog,
-                            fileInfo.Directory.Name,
-                            fileName
-                        );
-                }
-
-                List<EventData> newEntities = new List<EventData>();
-                foreach (var itemRow in rowsData)
-                {
-                    if (itemRow == null)
-                        continue;
-                    if (_maxPeriodRowData != DateTime.MinValue && itemRow.Period <= _maxPeriodRowData)
-                        if (fileInfo.Directory != null 
-                            && context.RowDataExistOnDatabase(_techJournalLog, itemRow, fileInfo.Directory.Name, fileInfo.Name))
-                            continue;
-
-                    newEntities.Add(itemRow);
-                }
-
-                if (fileInfo.Directory != null)
-                    context.SaveRowsData(_techJournalLog, newEntities, fileInfo.Directory.Name, fileName);
+                context.SaveRowsData(_techJournalLog, rowsData.ToList(), fileName);
             }
         }
         public override void SetInformationSystem(TechJournalLogBase techJournalLog)

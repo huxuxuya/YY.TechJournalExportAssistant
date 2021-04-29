@@ -9,6 +9,7 @@ namespace YY.TechJournalExportAssistant.Core
     {
         TechJournalPosition GetLastPosition(string directoryName);
         void SaveLogPosition(TechJournalPosition position);
+        void SaveLogPositions(List<TechJournalPosition> positions);
         int GetPortionSize();
         void SetInformationSystem(TechJournalLogBase techJournalLog);
         void Save(EventData eventData, string fileName);
