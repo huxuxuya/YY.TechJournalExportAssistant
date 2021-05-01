@@ -15,7 +15,6 @@ namespace YY.TechJournalExportAssistant.Core
         void Save(EventData eventData, string fileName);
         void Save(IList<EventData> eventData, string fileName);
         void Save(IDictionary<string, List<EventData>> rowsData);
-        IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings,
-            KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem);
+        IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings);
     }
 }

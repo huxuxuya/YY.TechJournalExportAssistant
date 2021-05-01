@@ -45,6 +45,132 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         #region RowsData
 
+        public void SaveRowsData(Dictionary<LogBufferItemKey, LogBufferItem> sourceDataFromBuffer)
+        {
+            List<object[]> rowsForInsert = new List<object[]>();
+            List<object[]> positionsForInsert = new List<object[]>();
+            Dictionary<string, LastRowsInfoByLogFile> maxPeriodByDirectories = new Dictionary<string, LastRowsInfoByLogFile>();
+
+            var dataFromBuffer = sourceDataFromBuffer
+                .OrderBy(i => i.Key.Period)
+                .ThenBy(i => i.Value.LogPosition.EventNumber)
+                .ToList();
+            long itemNumber = 0;
+            foreach (var dataItem in dataFromBuffer)
+            {
+                itemNumber++;
+                FileInfo logFileInfo = new FileInfo(dataItem.Key.LogFile);
+
+                positionsForInsert.Add(new object[]
+                {
+                    dataItem.Key.Settings.TechJournalLog.Name,
+                    logFileInfo.Directory?.Name ?? string.Empty,
+                    DateTime.Now.Ticks + itemNumber,
+                    logFileInfo.Name,
+                    logFileInfo.CreationTimeUtc,
+                    logFileInfo.LastWriteTimeUtc,
+                    dataItem.Value.LogPosition.EventNumber,
+                    dataItem.Value.LogPosition.CurrentFileData.Replace("\\", "\\\\"),
+                    dataItem.Value.LogPosition.StreamPosition ?? 0
+                });
+
+                foreach (var rowData in dataItem.Value.LogRows)
+                {
+                    if (!maxPeriodByDirectories.TryGetValue(logFileInfo.FullName, out LastRowsInfoByLogFile lastInfo))
+                    {
+                        if (logFileInfo.Directory != null)
+                        {
+                            GetRowsDataMaxPeriodAndId(
+                                dataItem.Key.Settings.TechJournalLog,
+                                logFileInfo.Directory.Name,
+                                logFileInfo.Name,
+                                rowData.Value.Period,
+                                out var maxPeriod,
+                                out var maxId
+                            );
+                            lastInfo = new LastRowsInfoByLogFile(maxPeriod, maxId);
+                            maxPeriodByDirectories.Add(logFileInfo.FullName, lastInfo);
+                        }
+                    }
+
+                    bool existByPeriod = lastInfo.MaxPeriod > ClickHouseHelpers.MinDateTimeValue &&
+                                         rowData.Value.Period.Truncate(TimeSpan.FromSeconds(1)) <= lastInfo.MaxPeriod;
+                    bool existById = lastInfo.MaxId > 0 &&
+                                     rowData.Value.Id <= lastInfo.MaxId;
+                    if (existByPeriod && existById)
+                        continue;
+
+                    var eventItem = rowData.Value;
+                    rowsForInsert.Add(new object[]
+                        {
+                            dataItem.Key.Settings.TechJournalLog.Name,
+                            logFileInfo.Directory.Name,
+                            logFileInfo.Name,
+                            eventItem.Id,
+                            eventItem.Period,
+                            eventItem.Level,
+                            eventItem.Duration,
+                            eventItem.DurationSec,
+                            eventItem.EventName ?? string.Empty,
+                            eventItem.ServerContextName ?? string.Empty,
+                            eventItem.ProcessName ?? string.Empty,
+                            eventItem.SessionId ?? 0,
+                            eventItem.ApplicationName ?? string.Empty,
+                            eventItem.ClientId ?? 0,
+                            eventItem.ComputerName ?? string.Empty,
+                            eventItem.ConnectionId ?? 0,
+                            eventItem.UserName ?? string.Empty,
+                            eventItem.ApplicationId ?? 0,
+                            eventItem.Context ?? string.Empty,
+                            eventItem.ActionType.GetDescription() ?? string.Empty,
+                            eventItem.Database ?? string.Empty,
+                            eventItem.DatabaseCopy ?? string.Empty,
+                            eventItem.DBMS.GetPresentation() ?? string.Empty,
+                            eventItem.DatabasePID ?? string.Empty,
+                            eventItem.PlanSQLText ?? string.Empty,
+                            eventItem.Rows ?? 0,
+                            eventItem.RowsAffected ?? 0,
+                            eventItem.SQLText ?? string.Empty,
+                            eventItem.SQLQueryOnly ?? string.Empty,
+                            eventItem.SQLQueryParametersOnly ?? string.Empty,
+                            eventItem.SQLQueryHash ?? string.Empty,
+                            eventItem.SDBL ?? string.Empty,
+                            eventItem.Description ?? string.Empty,
+                            eventItem.Message ?? string.Empty,
+                            eventItem.GetCustomFieldsAsJSON() ?? string.Empty
+                        });
+                }
+            }
+
+            if (rowsForInsert.Count > 0)
+            {
+                using (ClickHouseBulkCopy bulkCopyInterface = new ClickHouseBulkCopy(_connection)
+                {
+                    DestinationTableName = "EventData",
+                    BatchSize = 100000,
+                    MaxDegreeOfParallelism = 4
+                })
+                {
+                    var bulkResult = bulkCopyInterface.WriteToServerAsync(rowsForInsert);
+                    bulkResult.Wait();
+                    rowsForInsert.Clear();
+                }
+            }
+
+            if (positionsForInsert.Count > 0)
+            {
+                using (ClickHouseBulkCopy bulkCopyInterface = new ClickHouseBulkCopy(_connection)
+                {
+                    DestinationTableName = "LogFiles",
+                    BatchSize = 100000
+                })
+                {
+                    var bulkResult = bulkCopyInterface.WriteToServerAsync(positionsForInsert);
+                    bulkResult.Wait();
+                }
+            }
+        }
+
         public void SaveRowsData(TechJournalLogBase techJournalLog, 
             List<EventData> eventData, 
             string fileName,
@@ -55,7 +181,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
             SaveRowsData(techJournalLog, eventDataToInsert);
         }
-
+        
         public void SaveRowsData(TechJournalLogBase techJournalLog, 
             IDictionary<string, List<EventData>> eventData,
             Dictionary<string, LastRowsInfoByLogFile> maxPeriodByFiles = null)
@@ -195,9 +321,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         }
         
         public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(
-            TechJournalLogBase techJournalLog,
-            TechJournalSettings settings,
-            KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem)
+            TechJournalLogBase techJournalLog)
         {
             var cmdGetLastLogFileInfo = _connection.CreateCommand();
             cmdGetLastLogFileInfo.CommandText = Resource.Query_GetActualPositions;

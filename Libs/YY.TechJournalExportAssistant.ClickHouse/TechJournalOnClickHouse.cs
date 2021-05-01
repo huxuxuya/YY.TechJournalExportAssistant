@@ -2,7 +2,6 @@
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using YY.TechJournalExportAssistant.Core;
-using YY.TechJournalExportAssistant.Core.SharedBuffer;
 using YY.TechJournalReaderAssistant;
 using EventData = YY.TechJournalReaderAssistant.Models.EventData;
 
@@ -118,13 +117,13 @@ namespace YY.TechJournalExportAssistant.ClickHouse
             }
         }
 
-        public override IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem)
+        public override IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings)
         {
             IDictionary<string, TechJournalPosition> positions;
 
             using (var context = new ClickHouseContext(_connectionString))
             {
-                positions = context.GetCurrentLogPositions(_techJournalLog, settings, logBufferItem);
+                positions = context.GetCurrentLogPositions(_techJournalLog);
             }
 
             return positions;

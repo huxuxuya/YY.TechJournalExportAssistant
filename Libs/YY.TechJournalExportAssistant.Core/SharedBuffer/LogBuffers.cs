@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using YY.TechJournalReaderAssistant;
 using YY.TechJournalReaderAssistant.Models;
 
@@ -9,13 +10,14 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
 {
     public class LogBuffers
     {
-        public readonly ConcurrentDictionary<TechJournalSettings.LogSourceSettings, LogBufferItem> LogBuffer;
-        public readonly object LockObject;
-
+        public readonly ConcurrentDictionary<LogBufferItemKey, LogBufferItem> LogBuffer;
+        
+        public ConcurrentDictionary<TechJournalSettings.LogSourceSettings, ConcurrentDictionary<string, TechJournalPosition>> LogPositions { get; }
+        
         public LogBuffers()
         {
-            LogBuffer = new ConcurrentDictionary<TechJournalSettings.LogSourceSettings, LogBufferItem>();
-            LockObject = new object();
+            LogBuffer = new ConcurrentDictionary<LogBufferItemKey, LogBufferItem>();
+            LogPositions = new ConcurrentDictionary<TechJournalSettings.LogSourceSettings, ConcurrentDictionary<string, TechJournalPosition>>();
         }
 
         /// <summary>
@@ -25,17 +27,9 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
         {
             get
             {
-                long totalItemsCount = 0;
-
-                foreach (var logBufferItem in LogBuffer)
-                {
-                    //lock (logBufferItem.Key.LockObject)
-                    //{
-                        totalItemsCount += logBufferItem.Value.ItemsCount;
-                    //}
-                }
-
-                return totalItemsCount;
+                return LogBuffer
+                    .Select(e => e.Value.ItemsCount)
+                    .Sum();
             }
         }
 
@@ -47,16 +41,14 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
 
                 foreach (var logBufferItem in LogBuffer)
                 {
-                    //lock (logBufferItem.Key.LockObject)
-                    //{
-                        if (bufferCreated == DateTime.MinValue)
-                        {
-                            bufferCreated = logBufferItem.Value.Created;
-                        } else if (bufferCreated < logBufferItem.Value.Created)
-                        {
-                            bufferCreated = logBufferItem.Value.Created;
-                        }
-                    //}
+                    if (bufferCreated == DateTime.MinValue)
+                    {
+                        bufferCreated = logBufferItem.Value.Created;
+                    }
+                    else if (bufferCreated < logBufferItem.Value.Created)
+                    {
+                        bufferCreated = logBufferItem.Value.Created;
+                    }
                 }
 
                 return bufferCreated;
@@ -72,92 +64,61 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
             lock (logSettings.LockObject)
             {
                 var logFileInfo = new FileInfo(position.CurrentFileData);
-                SaveLogPosition(logSettings, logFileInfo, position);
-                SaveLogs(logSettings, rowsData, logFileInfo);
+                SaveLogs(logSettings, position, rowsData, logFileInfo);
             }
         }
-
-        private void SaveLogPosition(
-            TechJournalSettings.LogSourceSettings logSettings, 
-            FileInfo logFileInfo, 
-            TechJournalPosition position)
-        {
-            LogBuffer.AddOrUpdate(
-                logSettings,
-                (settings) =>
-                {
-                    var newLogBufferItem = new LogBufferItem();
-
-                    if (logFileInfo.Directory != null)
-                        newLogBufferItem.LogPositions.TryAdd(
-                            logFileInfo.Directory.Name,
-                            position);
-
-                    return newLogBufferItem;
-                },
-                (settings, logBufferItem) =>
-                {
-                    if (logFileInfo.Directory != null)
-                        logBufferItem.LogPositions.AddOrUpdate(
-                            logFileInfo.Directory.Name,
-                            (fullDirectoryName) => position,
-                            (fullDirectoryName, oldPosition) => position);
-
-                    return logBufferItem;
-                });
-        }
-
+        
         private void SaveLogs(
             TechJournalSettings.LogSourceSettings logSettings,
+            TechJournalPosition position,
             IList<EventData> rowsData,
             FileInfo logFileInfo)
         {
-            LogBuffer.AddOrUpdate(
-                logSettings,
+            var newBufferItem = new LogBufferItem();
+            newBufferItem.LastUpdate = DateTime.Now;
+            newBufferItem.LogPosition = position;
+            newBufferItem.Created = DateTime.Now;
+            foreach (var rowData in rowsData)
+            {
+                newBufferItem.LogRows.TryAdd(new EventKey()
+                {
+                    Id = Guid.NewGuid(),
+                    File = logFileInfo
+                }, rowData);
+            }
+
+            LogBuffer.TryAdd(new LogBufferItemKey(logSettings, DateTime.Now, logFileInfo.FullName), 
+                newBufferItem);
+
+            LogPositions.AddOrUpdate(logSettings,
                 (settings) =>
                 {
-                    var newBufferItem = new LogBufferItem();
-
-                    newBufferItem.LastUpdate = DateTime.Now;
-                    foreach (var rowData in rowsData)
-                    {
-                        newBufferItem.LogRows.TryAdd(new EventKey()
-                        {
-                            Id = Guid.NewGuid(),
-                            File = logFileInfo
-                        }, rowData);
-                    }
-
-                    return newBufferItem;
+                    var newPositions = new ConcurrentDictionary<string, TechJournalPosition>();
+                    if (logFileInfo.Directory != null)
+                        newPositions.AddOrUpdate(logFileInfo.Directory.Name,
+                            (dirName) => position, 
+                            (dirName, oldPosition) => position);
+                    return newPositions;
                 },
                 (settings, logBufferItem) =>
                 {
-                    DateTime operationDate = DateTime.Now;
-                    if (logBufferItem.Created == DateTime.MinValue)
-                        logBufferItem.Created = operationDate;
-                    logBufferItem.LastUpdate = operationDate;
-                    foreach (var rowData in rowsData)
-                    {
-                        logBufferItem.LogRows.TryAdd(new EventKey()
-                        {
-                            Id = Guid.NewGuid(),
-                            File = logFileInfo
-                        }, rowData);
-                    }
-
+                    if (logFileInfo.Directory != null)
+                        logBufferItem.AddOrUpdate(logFileInfo.Directory.Name,
+                            (dirName) => position,
+                            (dirName, oldPosition) => position);
                     return logBufferItem;
                 });
         }
-
+        
         public TechJournalPosition GetLastPosition(
             TechJournalSettings.LogSourceSettings logSettings, 
             TechJournalLogBase techJournalLog,
             string directoryName)
         {
             TechJournalPosition position = null;
-            if (LogBuffer.TryGetValue(logSettings, out LogBufferItem bufferItem))
+            if (LogPositions.TryGetValue(logSettings, out ConcurrentDictionary<string, TechJournalPosition> settingPositions))
             {
-                bufferItem.LogPositions.TryGetValue(directoryName, out position);
+                settingPositions.TryGetValue(directoryName, out position);
             }
 
             return position;

@@ -7,23 +7,38 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 {
     public class TechJournalOnClickHouseTargetBuilder : ITechJournalOnTargetBuilder
     {
-        public ITechJournalOnTarget CreateTarget(TechJournalSettings settings, KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem)
+        public ITechJournalOnTarget CreateTarget(TechJournalSettings settings, KeyValuePair<LogBufferItemKey, LogBufferItem> logBufferItem)
         {
             ITechJournalOnTarget target = new TechJournalOnClickHouse(settings.ConnectionString,
-                logBufferItem.Key.Portion);
-            target.SetInformationSystem(new TechJournalLogBase()
-            {
-                Name = logBufferItem.Key.Name,
-                Description = logBufferItem.Key.Description
-            });
+                logBufferItem.Key.Settings.Portion);
+            target.SetInformationSystem(logBufferItem.Key.Settings.TechJournalLog);
 
             return target;
         }
 
-        public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem)
+        public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, KeyValuePair<LogBufferItemKey, LogBufferItem> logBufferItem)
         {
             ITechJournalOnTarget target = CreateTarget(settings, logBufferItem);
-            return target.GetCurrentLogPositions(settings, logBufferItem);
+            return target.GetCurrentLogPositions(settings);
+        }
+
+        public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, TechJournalLogBase techJournalLog)
+        {
+            Dictionary<string, TechJournalPosition> allPositions = new Dictionary<string, TechJournalPosition>();
+            using (ClickHouseContext context = new ClickHouseContext(settings.ConnectionString))
+            {
+                return context.GetCurrentLogPositions(techJournalLog);
+            }
+        }
+
+        public void SaveRowsData(
+            TechJournalSettings settings,
+            Dictionary<LogBufferItemKey, LogBufferItem> dataFromBuffer)
+        {
+            using (ClickHouseContext context = new ClickHouseContext(settings.ConnectionString))
+            {
+                context.SaveRowsData(dataFromBuffer);
+            }
         }
     }
 }

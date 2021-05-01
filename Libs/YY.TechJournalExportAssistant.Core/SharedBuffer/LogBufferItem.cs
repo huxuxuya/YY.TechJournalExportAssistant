@@ -26,20 +26,19 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
         public long ItemsCount => LogRows.Count;
 
         /// <summary>
-        /// Актуальная позиция чтения файлов лога
+        /// Актуальная позиция чтения файла лога
         /// </summary>
-        public ConcurrentDictionary<string, TechJournalPosition> LogPositions { get; set; }
+        public TechJournalPosition LogPosition { get; set; }
 
         /// <summary>
         /// Записи логов
         /// </summary>
         public ConcurrentDictionary<EventKey, EventData> LogRows { get; set; }
-
+        
         public LogBufferItem()
         {
             Created = DateTime.Now;
             LastUpdate = DateTime.MinValue;
-            LogPositions = new ConcurrentDictionary<string, TechJournalPosition>();
             LogRows = new ConcurrentDictionary<EventKey, EventData>();
         }
     }

@@ -27,20 +27,16 @@ namespace YY.TechJournalExportAssistantWithSharedBufferConsoleApp
             Console.WriteLine("Good luck & bye!");
         }
 
-        private static void OnError(
-            TechJournalSettings.LogSourceSettings settings,
-            OnErrorExportSharedBufferEventArgs args)
+        private static void OnError(OnErrorExportSharedBufferEventArgs args)
         {
-            Console.WriteLine($"Ошибка при экспорте логов ({settings?.Name ?? "<>"}): {args.Exception}");
+            Console.WriteLine($"Ошибка при экспорте логов: {args.Exception}");
         }
 
-        private static void OnSend(
-            TechJournalSettings.LogSourceSettings settings,
-            OnSendLogFromSharedBufferEventArgs args)
+        private static void OnSend(OnSendLogFromSharedBufferEventArgs args)
         {
-            Console.WriteLine($"Отправка данных в хранилище ({settings?.Name ?? "<>"}):\n" +
-                              $"Записей: {args._rows.Select(e => e.Value.Count).Sum()}\n" +
-                              $"Актуальных позиций чтения: {args._positions.Count}");
+            Console.WriteLine($"Отправка данных в хранилище:\n" +
+                              $"Записей: {args.DataFromBuffer.Values.SelectMany(i => i.LogRows).Select(i => i.Value).Count()}\n" +
+                              $"Актуальных позиций чтения: {args.DataFromBuffer.Values.Select(i => i.LogPosition).Count() }");
         }
     }
 }

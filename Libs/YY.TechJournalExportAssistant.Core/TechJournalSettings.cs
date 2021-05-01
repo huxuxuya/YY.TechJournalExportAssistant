@@ -81,8 +81,25 @@ namespace YY.TechJournalExportAssistant.Core
 
         public class LogSourceSettings
         {
+            private TechJournalLogBase _techJournalLog;
             public string Name { get; }
             public string Description { get; }
+            public TechJournalLogBase TechJournalLog
+            {
+                get
+                {
+                    if (_techJournalLog == null)
+                    {
+                        _techJournalLog = new TechJournalLogBase()
+                        {
+                            Name = Name,
+                            Description = Description
+                        };
+                    }
+
+                    return _techJournalLog;
+                }
+            }
             public string SourcePath { get; }
             public int Portion { get; }
             public TimeZoneInfo TimeZone { get; }

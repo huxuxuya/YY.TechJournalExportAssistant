@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,12 +30,32 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
 
             foreach (var logSourceSettings in _settings.LogSources)
             {
-                _logBuffers.LogBuffer.TryAdd(logSourceSettings, new LogBufferItem());
-            }
-            foreach (var logBufferItem in _logBuffers.LogBuffer)
-            {
-                var logPositions = techJournalTargetBuilder.GetCurrentLogPositions(settings, logBufferItem);
-                logBufferItem.Value.LogPositions = new ConcurrentDictionary<string, TechJournalPosition>(logPositions);
+                _logBuffers.LogPositions.TryAdd(logSourceSettings,
+                    new ConcurrentDictionary<string, TechJournalPosition>());
+
+                var logPositions = techJournalTargetBuilder.GetCurrentLogPositions(settings, logSourceSettings.TechJournalLog);
+                foreach (var logPosition in logPositions)
+                {
+                    FileInfo logFileInfo = new FileInfo(logPosition.Value.CurrentFileData);
+                    _logBuffers.LogPositions.AddOrUpdate(logSourceSettings,
+                        (settingsKey) =>
+                        {
+                            var newPositions = new ConcurrentDictionary<string, TechJournalPosition>();
+                            if (logFileInfo.Directory != null)
+                                newPositions.AddOrUpdate(logFileInfo.Directory.Name,
+                                    (dirName) => logPosition.Value,
+                                    (dirName, oldPosition) => logPosition.Value);
+                            return newPositions;
+                        },
+                        (settingsKey, logBufferItemOld) =>
+                        {
+                            if (logFileInfo.Directory != null)
+                                logBufferItemOld.AddOrUpdate(logFileInfo.Directory.Name,
+                                    (dirName) => logPosition.Value,
+                                    (dirName, oldPosition) => logPosition.Value);
+                            return logBufferItemOld;
+                        });
+                }
             }
         }
 
@@ -143,7 +164,7 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
                 }
                 catch (Exception e)
                 {
-                    RaiseOnError(settings, new OnErrorExportSharedBufferEventArgs(e));
+                    RaiseOnError(new OnErrorExportSharedBufferEventArgs(e));
                     await Task.Delay(60000, cancellationToken);
                 }
             }
@@ -176,50 +197,30 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
                 {
                     if (cancellationToken.IsCancellationRequested)
                         break;
-                    TechJournalSettings.LogSourceSettings lastSettings = null;
 
                     try
                     {
-                        foreach (var logBufferItem in _logBuffers.LogBuffer)
+                        var itemsToUpload = _logBuffers.LogBuffer
+                            .Select(i => i.Key)
+                            .OrderBy(i => i.Period)
+                            .ToList();
+
+                        var dataToUpload = _logBuffers.LogBuffer
+                            .Where(i => itemsToUpload.Contains(i.Key))
+                            .ToDictionary(k => k.Key, v => v.Value);
+
+                        OnSend(new OnSendLogFromSharedBufferEventArgs(dataToUpload));
+
+                        _techJournalTargetBuilder.SaveRowsData(_settings, dataToUpload);
+
+                        foreach (var itemToUpload in itemsToUpload)
                         {
-                            lastSettings = logBufferItem.Key;
-                            if (cancellationToken.IsCancellationRequested)
-                                break;
-                            if (logBufferItem.Value.LogRows.Count == 0)
-                                continue;
-
-                            lock (logBufferItem.Key.LockObject)
-                            {
-                                var eventsByFile = logBufferItem.Value.LogRows
-                                    .Select(b => new
-                                    {
-                                        FileName = b.Key.File.FullName,
-                                        EventData = b.Value
-                                    })
-                                    .GroupBy(g => g.FileName)
-                                    .ToDictionary(
-                                        g => g.Key,
-                                        g => g.Select(e => e.EventData).ToList());
-
-                                OnSend(logBufferItem.Key, new OnSendLogFromSharedBufferEventArgs(
-                                    logBufferItem.Key, eventsByFile, logBufferItem.Value.LogPositions));
-
-                                ITechJournalOnTarget target = _techJournalTargetBuilder.CreateTarget(_settings, logBufferItem);
-                                
-                                target.Save(eventsByFile);
-                                eventsByFile.Clear();
-                                logBufferItem.Value.LogRows.Clear();
-
-                                target.SaveLogPositions(logBufferItem.Value.LogPositions.Select(l => l.Value).ToList());
-                                
-                                logBufferItem.Value.Created = DateTime.MinValue;
-                                logBufferItem.Value.LastUpdate = DateTime.MinValue;
-                            }
+                            _logBuffers.LogBuffer.TryRemove(itemToUpload, out _);
                         }
                     }
                     catch (Exception e)
                     {
-                        RaiseOnError(lastSettings, new OnErrorExportSharedBufferEventArgs(e));
+                        RaiseOnError(new OnErrorExportSharedBufferEventArgs(e));
                         await Task.Delay(1000, cancellationToken);
                     }
                 }
@@ -238,26 +239,22 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
 
         #region Events
 
-        public delegate void OnSendLogFromSharedBufferEventArgsHandler(TechJournalSettings.LogSourceSettings settings, OnSendLogFromSharedBufferEventArgs args);
-        public delegate void OnErrorExportSharedBufferEventArgsHandler(TechJournalSettings.LogSourceSettings settings, OnErrorExportSharedBufferEventArgs args);
+        public delegate void OnSendLogFromSharedBufferEventArgsHandler(OnSendLogFromSharedBufferEventArgs args);
+        public delegate void OnErrorExportSharedBufferEventArgsHandler(OnErrorExportSharedBufferEventArgs args);
         public event OnSendLogFromSharedBufferEventArgsHandler OnSendLogEvent;
         public event OnErrorExportSharedBufferEventArgsHandler OnErrorEvent;
 
-        protected void OnSend(
-            TechJournalSettings.LogSourceSettings settings,
-            OnSendLogFromSharedBufferEventArgs args)
+        protected void OnSend(OnSendLogFromSharedBufferEventArgs args)
         {
-            OnSendLogEvent?.Invoke(settings, args);
+            OnSendLogEvent?.Invoke(args);
         }
-        protected void RaiseOnError(
-            TechJournalSettings.LogSourceSettings settings,
-            OnErrorExportSharedBufferEventArgs args)
+        protected void RaiseOnError(OnErrorExportSharedBufferEventArgs args)
         {
-            OnErrorEvent?.Invoke(settings, args);
+            OnErrorEvent?.Invoke(args);
         }
         private void OnErrorExportDataToBuffer(OnErrorExportDataEventArgs e)
         {
-            RaiseOnError(null, new OnErrorExportSharedBufferEventArgs(e.Exception));
+            RaiseOnError(new OnErrorExportSharedBufferEventArgs(e.Exception));
         }
 
         #endregion

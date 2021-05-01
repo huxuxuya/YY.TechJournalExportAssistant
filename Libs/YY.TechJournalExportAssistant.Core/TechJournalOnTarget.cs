@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using YY.TechJournalExportAssistant.Core.SharedBuffer;
 using YY.TechJournalReaderAssistant;
 using YY.TechJournalReaderAssistant.Models;
 
@@ -50,7 +49,7 @@ namespace YY.TechJournalExportAssistant.Core
             throw new NotImplementedException();
         }
 
-        public virtual IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem)
+        public virtual IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings)
         {
             throw new NotImplementedException();
         }

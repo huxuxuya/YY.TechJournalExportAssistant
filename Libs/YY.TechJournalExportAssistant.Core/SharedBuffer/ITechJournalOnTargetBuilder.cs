@@ -5,7 +5,8 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
 {
     public interface ITechJournalOnTargetBuilder
     {
-        ITechJournalOnTarget CreateTarget(TechJournalSettings settings, KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem);
-        IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, KeyValuePair<TechJournalSettings.LogSourceSettings, LogBufferItem> logBufferItem);
+        ITechJournalOnTarget CreateTarget(TechJournalSettings settings, KeyValuePair<LogBufferItemKey, LogBufferItem> logBufferItem);
+        IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, TechJournalLogBase techJournalLog);
+        void SaveRowsData(TechJournalSettings settings, Dictionary<LogBufferItemKey, LogBufferItem> dataFromBuffer);
     }
 }
