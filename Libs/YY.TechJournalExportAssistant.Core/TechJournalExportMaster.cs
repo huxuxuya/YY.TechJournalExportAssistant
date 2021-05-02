@@ -126,7 +126,9 @@ namespace YY.TechJournalExportAssistant.Core
 
         private TechJournalPosition GetFixedCurrentPosition()
         {
-            TechJournalPosition lastPosition = _target.GetLastPosition();
+            DirectoryInfo logDirectoryInfo = new DirectoryInfo(_techJournalLogPath);
+            string directoryName = logDirectoryInfo.Name;
+            TechJournalPosition lastPosition = _target.GetLastPosition(directoryName);
 
             if (lastPosition != null)
             {
@@ -161,15 +163,13 @@ namespace YY.TechJournalExportAssistant.Core
             RiseBeforeExportData(out var cancel);
             if (!cancel)
             {
-                _target.Save(_dataToSend, currentFile.Name);
+                _target.Save(_dataToSend, currentFile.FullName);
                 RiseAfterExportData(reader.GetCurrentPosition());
             }
 
             if (reader.CurrentFile != null)
             {
-                _target.SaveLogPosition(
-                    currentFile,
-                    reader.GetCurrentPosition());
+                _target.SaveLogPosition(reader.GetCurrentPosition());
             }
             _dataToSend.Clear();
         }
@@ -217,13 +217,11 @@ namespace YY.TechJournalExportAssistant.Core
         }
         private void TechJournalReader_AfterReadFile(TechJournalReader sender, AfterReadFileEventArgs args)
         {
-            FileInfo _lastEventLogDataFileInfo = new FileInfo(args.FileName);
-
             if (_dataToSend.Count >= 0)
                 SendDataCurrentPortion(sender);
 
             TechJournalPosition position = sender.GetCurrentPosition();
-            _target.SaveLogPosition(_lastEventLogDataFileInfo, position);
+            _target.SaveLogPosition(position);
         }
         private void TechJournalReader_OnErrorEvent(TechJournalReader sender, OnErrorEventArgs args)
         {

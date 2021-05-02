@@ -38,6 +38,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{7E5B
 		Scripts\install-clickhouse.sh = Scripts\install-clickhouse.sh
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YY.TechJournalExportAssistantWithSharedBufferConsoleApp", "Apps\YY.TechJournalExportAssistantWithSharedBufferConsoleApp\YY.TechJournalExportAssistantWithSharedBufferConsoleApp.csproj", "{75DDC845-838D-4F33-914B-2D833179A463}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,6 +62,10 @@ Global
 		{62CDAE77-D687-423E-B88C-25967ECC2353}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62CDAE77-D687-423E-B88C-25967ECC2353}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62CDAE77-D687-423E-B88C-25967ECC2353}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75DDC845-838D-4F33-914B-2D833179A463}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75DDC845-838D-4F33-914B-2D833179A463}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75DDC845-838D-4F33-914B-2D833179A463}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75DDC845-838D-4F33-914B-2D833179A463}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -71,6 +77,7 @@ Global
 		{62CDAE77-D687-423E-B88C-25967ECC2353} = {274A8CD4-5F80-4164-B0F6-1F2ACBB8E00B}
 		{56E62BAA-09E0-4119-AA48-0F3B6E80C1F7} = {300AD5BD-47CB-4AA8-B823-9B061C7654D1}
 		{7E5B0AC0-4A78-4BC2-9C54-E461317125AB} = {300AD5BD-47CB-4AA8-B823-9B061C7654D1}
+		{75DDC845-838D-4F33-914B-2D833179A463} = {81F37230-D7FE-4190-A939-B5AE8A71494B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3DABD43-6E3B-4871-B426-2C4BDD6018CC}

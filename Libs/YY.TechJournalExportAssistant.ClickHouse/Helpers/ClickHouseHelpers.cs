@@ -9,6 +9,8 @@ namespace YY.TechJournalExportAssistant.ClickHouse.Helpers
 {
     public static class ClickHouseHelpers
     {
+        public static readonly DateTime MinDateTimeValue = new DateTime(1970, 1, 1);
+
         public static Dictionary<string, string> GetConnectionParams(string connectionString)
         {
             var connectionParams = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries)
@@ -61,9 +63,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse.Helpers
 
         private static void ExecNonReaderQuery(string connectionSettings, string commandTest)
         {
-            string paramName;
-            string paramValue;
-            string databaseName = GetDatabaseName(connectionSettings, out paramName, out paramValue);
+            string databaseName = GetDatabaseName(connectionSettings, out var paramName, out var paramValue);
 
             if (databaseName != null)
             {

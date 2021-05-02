@@ -1,25 +1,32 @@
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 using System.Threading;
 using ClickHouse.Client.ADO;
+using Newtonsoft.Json;
 using Xunit;
 using YY.TechJournalExportAssistant.ClickHouse;
 using YY.TechJournalExportAssistant.ClickHouse.Helpers;
 using YY.TechJournalExportAssistant.Core;
+using YY.TechJournalExportAssistant.Core.SharedBuffer;
 using YY.TechJournalReaderAssistant;
 
 namespace YY.TechJournalExportAssistant.Tests
 {
     public class TechJournalExportAssistantToClickHouseTests
     {
-        private readonly string _configFilePath;
         private readonly string _logDataPath;
+        private readonly IConfiguration Configuration;
 
         public TechJournalExportAssistantToClickHouseTests()
         {
-            _configFilePath = GetConfigFile();
+            var configFilePath = GetConfigFile();
+            Configuration = new ConfigurationBuilder()
+                .AddJsonFile(configFilePath, optional: true, reloadOnChange: true)
+                .Build();
 
             string unitTestDirectory = Directory.GetCurrentDirectory();
 
@@ -32,10 +39,6 @@ namespace YY.TechJournalExportAssistant.Tests
         [Fact]
         public void ExportDataTest()
         {
-            IConfiguration Configuration = new ConfigurationBuilder()
-                .AddJsonFile(_configFilePath, optional: true, reloadOnChange: true)
-                .Build();
-
             string connectionString = Configuration.GetConnectionString("TechJournalDatabase");
 
             IConfigurationSection techJournalSection = Configuration.GetSection("TechJournal");
@@ -83,7 +86,6 @@ namespace YY.TechJournalExportAssistant.Tests
                         target.SetInformationSystem(new TechJournalLogBase()
                         {
                             Name = techJournalName,
-                            DirectoryName = tjDirectory.DirectoryData.Name,
                             Description = techJournalDescription
                         });
                         exporter.SetTarget(target);
@@ -122,6 +124,85 @@ namespace YY.TechJournalExportAssistant.Tests
             }
 
             Assert.Equal(eventNumberReader, eventNumberFromClickHouse);
+        }
+
+        [Fact]
+        public async void ExportDataWithSharedBufferTest()
+        {
+            string connectionString = Configuration.GetConnectionString("TechJournalDatabase");
+
+            IConfigurationSection techJournalSection = Configuration.GetSection("TechJournal");
+            int watchPeriodSeconds = techJournalSection.GetValue("WatchPeriod", 60);
+            int watchPeriodSecondsMs = watchPeriodSeconds * 1000;
+            bool useWatchMode = techJournalSection.GetValue("UseWatchMode", false);
+            int portion = techJournalSection.GetValue("Portion", 1000);
+            string timeZoneName = techJournalSection.GetValue("TimeZone", string.Empty);
+
+            IConfigurationSection techJournalLogSection = Configuration.GetSection("TechJournalLog");
+            string techJournalName = techJournalLogSection.GetValue("Name", string.Empty);
+            string techJournalDescription = techJournalLogSection.GetValue("Description", string.Empty);
+
+            var LogSources = new List<dynamic>();
+            for (int i = 1; i <= 3; i++)
+            {
+                LogSources.Add(new
+                {
+                    Name = $"{techJournalName} {i}",
+                    Description = $"{techJournalDescription} {i}",
+                    SourcePath = _logDataPath,
+                    Portion = portion,
+                    TimeZone = timeZoneName
+                });
+            }
+
+            var configurationObject = new
+            {
+                ConnectionStrings = new
+                {
+                    TechJournalDatabase = connectionString.Replace("Database=", "Database=SharedBuffer")
+                },
+                WatchMode = new
+                {
+                    Use = useWatchMode,
+                    Periodicity = watchPeriodSecondsMs
+                },
+                Export = new
+                {
+                    Buffer = new
+                    {
+                        MaxItemCountSize = 10,
+                        MaxSaveDurationMs = 5000,
+                        MaxBufferSizeItemsCount = 100
+                    }
+                },
+                LogSources
+            };
+
+            var configurationAsJson = JsonConvert.SerializeObject(configurationObject);
+            IConfiguration configurationForTest = new ConfigurationBuilder().AddJsonStream(new MemoryStream(Encoding.UTF8.GetBytes(configurationAsJson))).Build();
+            TechJournalSettings settings = TechJournalSettings.Create(configurationForTest);
+
+            ClickHouseHelpers.DropDatabaseIfExist(settings.ConnectionString);
+
+            TechJournalExport exportMaster = new TechJournalExport(settings, new TechJournalOnClickHouseTargetBuilder());
+            await exportMaster.StartExport();
+
+            int eventNumberFromClickHouse = 0;
+            using (ClickHouseConnection cn = new ClickHouseConnection(settings.ConnectionString))
+            {
+                using (ClickHouseCommand cmd = new ClickHouseCommand(cn))
+                {
+                    cmd.CommandText =
+                        @"SELECT
+	                    COUNT(*)
+                    FROM EventData ed";
+                    var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                        eventNumberFromClickHouse = Convert.ToInt32(reader.GetValue(0));
+                }
+            }
+
+            Assert.Equal(9339, eventNumberFromClickHouse);
         }
 
         private string GetConfigFile()

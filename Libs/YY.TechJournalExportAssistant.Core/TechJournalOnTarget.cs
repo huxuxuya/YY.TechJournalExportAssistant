@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using YY.TechJournalReaderAssistant;
 using YY.TechJournalReaderAssistant.Models;
 
@@ -10,7 +9,12 @@ namespace YY.TechJournalExportAssistant.Core
     {
         #region Public Methods
 
-        public virtual TechJournalPosition GetLastPosition()
+        public virtual TechJournalPosition GetLastPosition(string directoryName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void SaveLogPositions(List<TechJournalPosition> positions)
         {
             throw new NotImplementedException();
         }
@@ -30,7 +34,7 @@ namespace YY.TechJournalExportAssistant.Core
             throw new NotImplementedException();
         }
 
-        public virtual void SaveLogPosition(FileInfo logFileInfo, TechJournalPosition position)
+        public virtual void SaveLogPosition(TechJournalPosition position)
         {
             throw new NotImplementedException();
         }
@@ -39,7 +43,17 @@ namespace YY.TechJournalExportAssistant.Core
         {
             throw new NotImplementedException();
         }
-        
+
+        public virtual void Save(IDictionary<string, List<EventData>> rowsData)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 }

@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using YY.TechJournalExportAssistant.Core;
 using YY.TechJournalReaderAssistant;
@@ -14,12 +13,9 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         private const int _defaultPortion = 1000;
         private readonly int _portion;
-        private DateTime _maxPeriodRowData;
         private TechJournalLogBase _techJournalLog;
         private readonly string _connectionString;
         private TechJournalPosition _lastTechJournalFilePosition;
-        private int _stepsToClearLogFiles = 10000;
-        private int _currentStepToClearLogFiles;
 
         #endregion
 
@@ -36,7 +32,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
         public TechJournalOnClickHouse(string connectionString, int portion)
         {
             _portion = portion;
-            _maxPeriodRowData = DateTime.MinValue;
 
             if (connectionString == null)
             {
@@ -53,33 +48,36 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         #region Public Methods
 
-        public override TechJournalPosition GetLastPosition()
+        public override TechJournalPosition GetLastPosition(string directoryName)
         {
             if (_lastTechJournalFilePosition != null)
                 return _lastTechJournalFilePosition;
 
             TechJournalPosition position;
             using(var context = new ClickHouseContext(_connectionString))
-                position = context.GetLogFilePosition(_techJournalLog);
+                position = context.GetLogFilePosition(_techJournalLog, directoryName);
             
             _lastTechJournalFilePosition = position;
             return position;
         }
-        public override void SaveLogPosition(FileInfo logFileInfo, TechJournalPosition position)
+        public override void SaveLogPosition(TechJournalPosition position)
         {
             using (var context = new ClickHouseContext(_connectionString))
             {
-                context.SaveLogPosition(_techJournalLog, logFileInfo, position);
-                if (_currentStepToClearLogFiles == 0 || _currentStepToClearLogFiles >= _stepsToClearLogFiles)
-                {
-                    context.RemoveArchiveLogFileRecords(_techJournalLog);
-                    _currentStepToClearLogFiles = 0;
-                }
-                _currentStepToClearLogFiles += 1;
+                context.SaveLogPosition(_techJournalLog, position);
             }
 
             _lastTechJournalFilePosition = position;
         }
+
+        public override void SaveLogPositions(List<TechJournalPosition> positions)
+        {
+            using (var context = new ClickHouseContext(_connectionString))
+            {
+                context.SaveLogPositions(_techJournalLog, positions);
+            }
+        }
+
         public override int GetPortionSize()
         {
             return _portion;
@@ -100,31 +98,35 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
             using (var context = new ClickHouseContext(_connectionString))
             {
-                if (_maxPeriodRowData == DateTime.MinValue)
-                {
-                    _maxPeriodRowData = context.GetRowsDataMaxPeriod(
-                        _techJournalLog,
-                        fileName
-                    );
-                }
-
-                List<EventData> newEntities = new List<EventData>();
-                foreach (var itemRow in rowsData)
-                {
-                    if (itemRow == null)
-                        continue;
-                    if (_maxPeriodRowData != DateTime.MinValue && itemRow.Period <= _maxPeriodRowData)
-                        if (context.RowDataExistOnDatabase(_techJournalLog, itemRow, fileName))
-                            continue;
-
-                    newEntities.Add(itemRow);
-                }
-                context.SaveRowsData(_techJournalLog, newEntities, fileName);
+                context.SaveRowsData(_techJournalLog, rowsData.ToList(), fileName);
             }
         }
         public override void SetInformationSystem(TechJournalLogBase techJournalLog)
         {
             _techJournalLog = techJournalLog;
+        }
+
+        public override void Save(IDictionary<string, List<EventData>> rowsData)
+        {
+            if (rowsData.Count == 0)
+                return;
+
+            using (var context = new ClickHouseContext(_connectionString))
+            {
+                context.SaveRowsData(_techJournalLog, rowsData);
+            }
+        }
+
+        public override IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings)
+        {
+            IDictionary<string, TechJournalPosition> positions;
+
+            using (var context = new ClickHouseContext(_connectionString))
+            {
+                positions = context.GetCurrentLogPositions(_techJournalLog);
+            }
+
+            return positions;
         }
 
         #endregion
