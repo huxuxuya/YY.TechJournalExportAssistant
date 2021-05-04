@@ -104,7 +104,7 @@ namespace YY.TechJournalExportAssistant.ClickHouse
                     rowsForInsert.Add(new object[]
                         {
                             dataItem.Key.Settings.TechJournalLog.Name,
-                            logFileInfo.Directory.Name,
+                            logFileInfo.Directory?.Name ?? string.Empty,
                             logFileInfo.Name,
                             eventItem.Id,
                             eventItem.Period,

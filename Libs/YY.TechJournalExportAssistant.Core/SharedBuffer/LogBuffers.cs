@@ -32,29 +32,7 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
                     .Sum();
             }
         }
-
-        public DateTime Created
-        {
-            get
-            {
-                DateTime bufferCreated = DateTime.MinValue;
-
-                foreach (var logBufferItem in LogBuffer)
-                {
-                    if (bufferCreated == DateTime.MinValue)
-                    {
-                        bufferCreated = logBufferItem.Value.Created;
-                    }
-                    else if (bufferCreated < logBufferItem.Value.Created)
-                    {
-                        bufferCreated = logBufferItem.Value.Created;
-                    }
-                }
-
-                return bufferCreated;
-            }
-        }
-
+        
         public void SaveLogsAndPosition(
             TechJournalSettings.LogSourceSettings logSettings,
             TechJournalPosition position,
@@ -75,9 +53,7 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
             FileInfo logFileInfo)
         {
             var newBufferItem = new LogBufferItem();
-            newBufferItem.LastUpdate = DateTime.Now;
             newBufferItem.LogPosition = position;
-            newBufferItem.Created = DateTime.Now;
             foreach (var rowData in rowsData)
             {
                 newBufferItem.LogRows.TryAdd(new EventKey()

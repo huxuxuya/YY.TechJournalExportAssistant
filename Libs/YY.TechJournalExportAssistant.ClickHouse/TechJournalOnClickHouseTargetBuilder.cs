@@ -24,7 +24,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
 
         public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, TechJournalLogBase techJournalLog)
         {
-            Dictionary<string, TechJournalPosition> allPositions = new Dictionary<string, TechJournalPosition>();
             using (ClickHouseContext context = new ClickHouseContext(settings.ConnectionString))
             {
                 return context.GetCurrentLogPositions(techJournalLog);

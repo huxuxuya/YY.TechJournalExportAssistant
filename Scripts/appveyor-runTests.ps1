@@ -1,1 +1,0 @@
-dotnet test ./Tests/YY.TechJournalExportAssistant.Tests/YY.TechJournalExportAssistant.Tests.csproj

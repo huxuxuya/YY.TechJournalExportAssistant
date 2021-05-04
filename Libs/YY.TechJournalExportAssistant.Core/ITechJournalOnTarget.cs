@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using YY.TechJournalExportAssistant.Core.SharedBuffer;
 using YY.TechJournalReaderAssistant;
 using YY.TechJournalReaderAssistant.Models;
 
