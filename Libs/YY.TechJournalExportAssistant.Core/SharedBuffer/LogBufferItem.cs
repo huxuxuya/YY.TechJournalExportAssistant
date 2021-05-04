@@ -11,16 +11,6 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
     public class LogBufferItem
     {
         /// <summary>
-        /// Дата создания
-        /// </summary>
-        public DateTime Created { get; set; }
-
-        /// <summary>
-        /// Дата последнего обновления
-        /// </summary>
-        public DateTime LastUpdate { get; set; }
-
-        /// <summary>
         /// Количество записей лога в буфере
         /// </summary>
         public long ItemsCount => LogRows.Count;
@@ -37,8 +27,6 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
         
         public LogBufferItem()
         {
-            Created = DateTime.Now;
-            LastUpdate = DateTime.MinValue;
             LogRows = new ConcurrentDictionary<EventKey, EventData>();
         }
     }

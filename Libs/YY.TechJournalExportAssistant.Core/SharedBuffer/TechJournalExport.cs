@@ -172,22 +172,21 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
 
         private async Task SendLogFromBuffer(CancellationToken cancellationToken)
         {
+            DateTime lastExportDate = DateTime.Now;
             while (true)
             {
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
                 bool needExport = false;
-
                 if (_logBuffers.TotalItemsCount >= _settings.Export.Buffer.MaxItemCountSize)
                 {
                     needExport = true;
                 }
                 else
                 {
-                    DateTime bufferCreated = _logBuffers.Created;
-                    var createTimeLeftMs = (DateTime.Now - bufferCreated).TotalMilliseconds;
-                    if (bufferCreated != DateTime.MinValue && createTimeLeftMs >= _settings.Export.Buffer.MaxSaveDurationMs)
+                    var createTimeLeftMs = (DateTime.Now - lastExportDate).TotalMilliseconds;
+                    if (lastExportDate != DateTime.MinValue && createTimeLeftMs >= _settings.Export.Buffer.MaxSaveDurationMs)
                     {
                         needExport = true;
                     }
@@ -217,15 +216,16 @@ namespace YY.TechJournalExportAssistant.Core.SharedBuffer
                         {
                             _logBuffers.LogBuffer.TryRemove(itemToUpload, out _);
                         }
+                        lastExportDate = DateTime.Now;
                     }
                     catch (Exception e)
                     {
                         RaiseOnError(new OnErrorExportSharedBufferEventArgs(e));
-                        await Task.Delay(1000, cancellationToken);
+                        await Task.Delay(60000, cancellationToken);
                     }
                 }
 
-                await Task.Delay(100, cancellationToken);
+                await Task.Delay(1000, cancellationToken);
 
                 if (!_settings.WatchMode.Use
                     && _logBuffers.TotalItemsCount == 0)
