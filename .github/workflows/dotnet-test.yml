@@ -1,7 +1,9 @@
-name: Release
+name: Testing
 
 on:
   push:
+    branches: [ develop ]
+  pull_request:
     branches: [ main ]
 
 jobs:
@@ -23,5 +25,3 @@ jobs:
       run: dotnet build --configuration Release --no-restore
     - name: Test
       run: dotnet test Tests/YY.TechJournalExportAssistant.Tests/YY.TechJournalExportAssistant.Tests.csproj
-    - name: Deploy
-      run: chmod +x ./Scripts/deploy.sh && ./Scripts/deploy.sh ${{secrets.NUGET_API_KEY}}

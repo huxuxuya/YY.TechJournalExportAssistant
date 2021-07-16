@@ -16,12 +16,6 @@ namespace YY.TechJournalExportAssistant.ClickHouse
             return target;
         }
 
-        public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, KeyValuePair<LogBufferItemKey, LogBufferItem> logBufferItem)
-        {
-            ITechJournalOnTarget target = CreateTarget(settings, logBufferItem);
-            return target.GetCurrentLogPositions(settings);
-        }
-
         public IDictionary<string, TechJournalPosition> GetCurrentLogPositions(TechJournalSettings settings, TechJournalLogBase techJournalLog)
         {
             using (ClickHouseContext context = new ClickHouseContext(settings.ConnectionString))
