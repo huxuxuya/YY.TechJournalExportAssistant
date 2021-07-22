@@ -27,9 +27,10 @@ namespace YY.TechJournalExportAssistantWithSharedBufferConsoleApp
             Console.WriteLine("Good luck & bye!");
         }
 
-        private static void OnError(OnErrorExportSharedBufferEventArgs args)
+        private static void OnError(OnErrorExportSharedBufferEventArgs e)
         {
-            Console.WriteLine($"Ошибка при экспорте логов: {args.Exception}");
+            Console.WriteLine($"Log name: {e?.Exception?.Settings?.Name ?? "Unknown"}\n" +
+                              $"Error info: {e.Exception.ToString()}");
         }
 
         private static void OnSend(OnSendLogFromSharedBufferEventArgs args)
