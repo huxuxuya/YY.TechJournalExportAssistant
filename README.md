@@ -12,7 +12,7 @@
 ### Состояние сборки
 | Windows |  Linux |
 |:-------:|:------:|
-| [![Build status](https://ci.appveyor.com/api/projects/status/vjvb80jf0p5m18vh?svg=true)](https://ci.appveyor.com/project/YPermitin/yy-techjournalexportassistant) | ![.NET](https://github.com/YPermitin/YY.TechJournalExportAssistant/workflows/.NET/badge.svg) |
+| [![Testing on Windows](https://github.com/YPermitin/YY.TechJournalExportAssistant/actions/workflows/dotnet-test-on-windows.yml/badge.svg)](https://github.com/YPermitin/YY.TechJournalExportAssistant/actions/workflows/dotnet-test-on-windows.yml) | [![Testing on Linux](https://github.com/YPermitin/YY.TechJournalExportAssistant/actions/workflows/dotnet-test-on-linux.yml/badge.svg)](https://github.com/YPermitin/YY.TechJournalExportAssistant/actions/workflows/dotnet-test-on-linux.yml)    |
 
 ### Code Climate
 
