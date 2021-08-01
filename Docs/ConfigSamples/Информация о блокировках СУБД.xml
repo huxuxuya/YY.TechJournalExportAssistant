@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+	<log location="C:\Logs\1C\DBMSLocks" history="168">
+		<property name="all"/>
+		<event>
+			<gt property="lkpto" value="0"/>
+		</event>
+		<event>
+			<gt property="lkato" value="0"/>
+		</event>
+	</log>
+	<dbmslocks/>
+</config>

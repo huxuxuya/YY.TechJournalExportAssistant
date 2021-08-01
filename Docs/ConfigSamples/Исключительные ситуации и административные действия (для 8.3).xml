@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+    <log location="C:\Logs\1C\Errors" history="168">
+        <event>
+            <eq property="name" value="EXCP"/>
+        </event>
+        <event>
+            <eq property="name" value="EXCPCNTX"/>
+        </event>
+        <event>
+            <eq property="name" value="ADMIN"/>
+        </event>
+        <event>
+            <eq property="name" value="CONN"/>
+        </event>        
+        <event>
+            <eq property="name" value="PROC"/>
+        </event>
+        <event>
+            <eq property="name" value="QERR"/>
+        </event>
+        <event>
+            <eq property="name" value="SCOM"/>
+        </event>
+        <event>
+            <eq property="name" value="TDEADLOCK"/>
+        </event>
+        <event>
+            <eq property="name" value="TTIMEOUT"/>
+        </event>
+        <event>
+            <eq property="name" value="MAILPARSEERR"/>
+        </event>
+        <event>
+			<eq property="name" value="SDBL"/>
+			<gt property="duration" value="300000"/>
+		</event>
+		<event>
+			<eq property="name" value="SDBL"/>
+			<eq property="func" value="setrollbackonly"/>
+		</event>
+		<event>
+			<eq property="name" value="DBMSSQL"/>
+			<gt property="duration" value="300000"/>
+		</event>
+		<event>
+			<eq property="name" value="CALL"/>
+			<gt property="memorypeak" value="500000000"/>
+		</event>
+        <property name="all"/>
+    </log>
+</config>

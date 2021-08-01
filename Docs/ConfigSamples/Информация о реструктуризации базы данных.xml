@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+	<system level="trace"/>
+	<log location="C:\Logs\1C\DBRestructuring" history="168">
+		<event>
+            <eq property="EventType" value="Workflow"/>
+        </event>
+        <event>
+            <eq property="EventType" value="Analysis"/>
+        </event>
+        <event>
+            <eq property="EventType" value="Restructuring"/>
+        </event>
+        <property name="RestructMode"/>
+        <property name="Description"/>
+        <property name="Duration"/>
+    </log>
+</config>

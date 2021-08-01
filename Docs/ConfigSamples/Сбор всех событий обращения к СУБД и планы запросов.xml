@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+	<log location="C:\Logs\1C\DBMSCallsAndPlans" history="168">
+		<event>
+			<eq property="name" value="DB2"/>
+		</event>
+		<event>
+			<eq property="name" value="DBMSSQL"/>
+		</event>
+		<event>
+			<eq property="name" value="DBPOSTGRS"/>
+		</event>
+		<event>
+			<eq property="name" value="DBORACLE"/>
+		</event>
+		<event>
+			<eq property="name" value="EXCP"/>
+		</event>
+		<event>
+			<eq property="name" value="DBV8DBENG"/>
+		</event>
+		<event>
+			<eq property="name" value="QERR"/>
+		</event>
+		<property name="all"/>
+	</log>
+	<plansql/>
+</config>
