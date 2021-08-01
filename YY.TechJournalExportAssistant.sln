@@ -39,6 +39,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{7E5B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YY.TechJournalExportAssistantWithSharedBufferConsoleApp", "Apps\YY.TechJournalExportAssistantWithSharedBufferConsoleApp\YY.TechJournalExportAssistantWithSharedBufferConsoleApp.csproj", "{75DDC845-838D-4F33-914B-2D833179A463}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{84CA9869-EBD1-4DF4-A5FB-415A9B0FE58B}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\README.md = Docs\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "QueriesSamples", "QueriesSamples", "{4827F904-3221-4AF4-9B9E-87E524B3A257}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\QueriesSamples\Долгие запросы с контекстом выполнения.sql = Docs\QueriesSamples\Долгие запросы с контекстом выполнения.sql
+		Docs\QueriesSamples\Ошибки и интенсивность их появления.sql = Docs\QueriesSamples\Ошибки и интенсивность их появления.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConfigSamples", "ConfigSamples", "{DBDDB559-BC3C-4316-BF36-627FFA394ECB}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\ConfigSamples\Долгие запросы (дольше 5 секунд, MSSQLServer).xml = Docs\ConfigSamples\Долгие запросы (дольше 5 секунд, MSSQLServer).xml
+		Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.2).xml = Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.2).xml
+		Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.3).xml = Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.3).xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +95,9 @@ Global
 		{56E62BAA-09E0-4119-AA48-0F3B6E80C1F7} = {300AD5BD-47CB-4AA8-B823-9B061C7654D1}
 		{7E5B0AC0-4A78-4BC2-9C54-E461317125AB} = {300AD5BD-47CB-4AA8-B823-9B061C7654D1}
 		{75DDC845-838D-4F33-914B-2D833179A463} = {81F37230-D7FE-4190-A939-B5AE8A71494B}
+		{84CA9869-EBD1-4DF4-A5FB-415A9B0FE58B} = {300AD5BD-47CB-4AA8-B823-9B061C7654D1}
+		{4827F904-3221-4AF4-9B9E-87E524B3A257} = {84CA9869-EBD1-4DF4-A5FB-415A9B0FE58B}
+		{DBDDB559-BC3C-4316-BF36-627FFA394ECB} = {84CA9869-EBD1-4DF4-A5FB-415A9B0FE58B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3DABD43-6E3B-4871-B426-2C4BDD6018CC}

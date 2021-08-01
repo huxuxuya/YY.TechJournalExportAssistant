@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+    <log location="C:\Logs\1C\LongQueries" history="168">
+        <event>
+			<eq property="Name" value="SDBL"/>
+			<ge property="Duration" value="50000"/>
+		</event>
+		<event>
+			<eq property="Name" value="DBMSSQL"/>
+			<ge property="Duration" value="50000"/>
+		</event>
+		<property name="p:processName"/>
+		<property name="t:computerName"/>
+		<property name="t:connectID"/>
+		<property name="dbpid"/>
+		<property name="Context"/>
+		<property name="Sql"/>
+		<property name="Usr"/>
+		<property name="rows"/>
+    </log>
+</config>
