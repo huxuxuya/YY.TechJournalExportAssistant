@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+	<system level="trace"/>
+	<log location="C:\Logs\1C\UserInterface" history="168">
+		<event>
+			<eq property="name" value="SYSTEM"/>
+		</event>
+		<event>
+			<eq property="name" value="QERR"/>
+		</event>
+	</log>
+	<system level="trace" class="MsgLoop"/>
+</config>

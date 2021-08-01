@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+    <dump create="false"/>
+	<log location="C:\Logs\1C\ManagedLocks" history="168">
+		<property name="all"/>
+			<event>
+				<eq property="Name" value="TLOCK"/>
+			</event>
+			<event>
+				<eq property="Name" value="TTIMEOUT"/>
+			</event>
+			<event>
+				<eq property="Name" value="TDEADLOCK"/>
+			</event>
+			<event>
+				<eq property="name" value="SDBL"/>
+				<eq property="func" value="begintransaction"/>
+			</event>
+			<event>
+				<eq property="name" value="SDBL"/>
+				<eq property="func" value="committransaction"/>
+			</event>
+			<event>
+				<eq property="name" value="SDBL"/>
+				<eq property="func" value="rollbacktransaction"/>
+			</event>
+			<event>
+				<eq property="name" value="QERR"/>
+			</event>
+	</log>
+</config>

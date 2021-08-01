@@ -52,9 +52,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "QueriesSamples", "QueriesSa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConfigSamples", "ConfigSamples", "{DBDDB559-BC3C-4316-BF36-627FFA394ECB}"
 	ProjectSection(SolutionItems) = preProject
+		Docs\ConfigSamples\Взаимодействие с пользовательским интерфейсом.xml = Docs\ConfigSamples\Взаимодействие с пользовательским интерфейсом.xml
+		Docs\ConfigSamples\Диагностика утечек памяти.xml = Docs\ConfigSamples\Диагностика утечек памяти.xml
 		Docs\ConfigSamples\Долгие запросы (дольше 5 секунд, MSSQLServer).xml = Docs\ConfigSamples\Долгие запросы (дольше 5 секунд, MSSQLServer).xml
+		Docs\ConfigSamples\Информация о блокировках СУБД.xml = Docs\ConfigSamples\Информация о блокировках СУБД.xml
+		Docs\ConfigSamples\Информация о реструктуризации базы данных.xml = Docs\ConfigSamples\Информация о реструктуризации базы данных.xml
+		Docs\ConfigSamples\Информация об управляемых блокировках.xml = Docs\ConfigSamples\Информация об управляемых блокировках.xml
 		Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.2).xml = Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.2).xml
 		Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.3).xml = Docs\ConfigSamples\Исключительные ситуации и административные действия (для 8.3).xml
+		Docs\ConfigSamples\Сбор всех событий (клиентский компьютер).xml = Docs\ConfigSamples\Сбор всех событий (клиентский компьютер).xml
+		Docs\ConfigSamples\Сбор всех событий обращения к СУБД и планы запросов.xml = Docs\ConfigSamples\Сбор всех событий обращения к СУБД и планы запросов.xml
+		Docs\ConfigSamples\Сбор всех событий обращения к СУБД.xml = Docs\ConfigSamples\Сбор всех событий обращения к СУБД.xml
+		Docs\ConfigSamples\Сбор всех событий.xml = Docs\ConfigSamples\Сбор всех событий.xml
+		Docs\ConfigSamples\Сбор данных полностью выключен.xml = Docs\ConfigSamples\Сбор данных полностью выключен.xml
 	EndProjectSection
 EndProject
 Global
